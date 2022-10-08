@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /tags/
+Allow: /categories/
+Allow: /archives/ 
+Disallow: /about/ 
+Disallow: /friends/
+Disallow: /vendors/
+Disallow: /js/
+Disallow: /css/
+Disallow: /fonts/
+Disallow: /vendors/
+Disallow: /fancybox/
+
+Sitemap: https://blog.onestravel.cn/sitemap.xml
+Sitemap: https://blog.onestravel.cn/baidusitemap.xml

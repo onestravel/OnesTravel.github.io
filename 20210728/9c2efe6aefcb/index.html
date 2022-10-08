@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>【笔记四】编译插桩操纵字节码，实现不可能完成的任务</title>
+  
+  
+  <meta property="og:title" content="【笔记四】编译插桩操纵字节码，实现不可能完成的任务">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20210728/9c2efe6aefcb/index.html">
+  
+  
+  <meta property="og:img" content="/medias/avatar.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-07-28">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="JVM">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      【笔记四】编译插桩操纵字节码，实现不可能完成的任务
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-07-28T14:31:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-07-28</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/Android/" class="post-meta-link">Android</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>3.6k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/JVM/" class="post-meta-link">JVM</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="【笔记四】编译插桩操纵字节码，实现不可能完成的任务"><a href="#【笔记四】编译插桩操纵字节码，实现不可能完成的任务" class="headerlink" title="【笔记四】编译插桩操纵字节码，实现不可能完成的任务"></a>【笔记四】编译插桩操纵字节码，实现不可能完成的任务</h1><p>根据之前学习的class 字节码文件的解析，接下来在此基础上进行一些更深入的操作，来加深对 class 字节码文件的理解。</p>
+<p>相信做过 Android 开发的工程师大多都遇到过这种需求：</p>
+<blockquote>
+<p>记录每一个页面的打开和关闭事件，并通过各种 DataTracking 的框架上传到服务器，用来日后做数据分析。</p>
+</blockquote>
+<p>面对这样的需求，一般人都会想到，这其实就是在每一个 Activity 的 onCreate 和 onDestroy 方法中，分别添加页面打开和页面关闭的逻辑。常见的做法有以下三种：</p>
+<ol>
+<li>修改项目中现有的每一个 Activity，这样显然不够高大上，并且如果项目以后需要添加新的页面，这套逻辑需要重新拷贝一遍，非常容易遗漏。</li>
+<li>将项目中所有的 Activity 继承自 BaseActivity，将页面打开和关闭的逻辑添加在 BaseActivity中，这种方案看起来比第 1 种方案高级得多，并且后续项目中有新的 Activity，直接继承 BaseActivity 即可。但是这种方案对第三方依赖库中的界面则无能为力，因为我们没有第三方依赖库的源码。</li>
+<li>在 Application 中调用<code>registerActivityLifecycleCallbacks(ActivityLifecycleCallbacks callback)</code> 方法来注册一个 Activity 生命周期的监听回调，所有的 Activity 都会走该回调，我们可以在该回调中通过生命周期的方法来记录页面打开和关闭事件。</li>
+</ol>
+<p>除了这三种方案，还有一种更加优雅更加完整的方案应运而生：<strong>编译插桩</strong>。</p>
+<h2 id="1-编译插桩是什么"><a href="#1-编译插桩是什么" class="headerlink" title="1. 编译插桩是什么"></a>1. 编译插桩是什么</h2><p>顾名思义，所谓编译插桩就是在代码编译期间修改已有的代码或者生成新代码。实际上，我们项目中经常用到的 Dagger、ButterKnife 甚至是 Kotlin 语言，它们都用到了编译插桩的技术。</p>
+<p>理解编译插桩之前，需要先回顾一下 Android 项目中 .java 文件的编译过程：</p>
+<img src="/images/android:jvm/java_to_class_to_dex.png" alt="img" style="zoom:88%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/java_to_class_to_dex.png" class="lozad post-image">
+
+<p>从上图可以看出，我们可以在 1、2 两处对代码进行改造。</p>
+<ol>
+<li>在 .java 文件编译成 .class 文件时，APT、AndroidAnnotation 等就是在此处触发代码生成。</li>
+<li>在 .class 文件进一步优化成 .dex 文件时，也就是直接操作字节码文件。这种方式功能更加强大，应用场景也更多。但是门槛比较高，需要对字节码有一定的理解。</li>
+</ol>
+<p>主要介绍第 2 种实现方式，用一张图来描述如下过程</p>
+<img src="/images/android:jvm/java_class_to_dex_chazhuang.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/java_class_to_dex_chazhuang.png" class="lozad post-image">
+
+<p>一般情况下，我们经常会使用编译插桩实现如下几种功能：</p>
+<ul>
+<li>日志埋点；</li>
+<li>性能监控；</li>
+<li>动态权限控制；</li>
+<li>业务逻辑跳转时，校验是否已经登录；</li>
+<li>甚至是代码调试等。</li>
+</ul>
+<h2 id="2-插桩工具介绍"><a href="#2-插桩工具介绍" class="headerlink" title="2. 插桩工具介绍"></a>2. 插桩工具介绍</h2><p>目前市面上主要流行两种实现编译插桩的方式：</p>
+<p><strong>AspectJ</strong></p>
+<p>AspectJ 是老牌 AOP（Aspect-Oriented Programming）框架，如果你做过 J2EE 开发可能对这个框架更加熟悉，经常会拿这个框架跟 Spring AOP 进行比较。其主要优势是成熟稳定，使用者也不需要对字节码文件有深入的理解。</p>
+<p><strong>ASM</strong></p>
+<p>目前另一种编译插桩的方式 ASM 越来越受到广大工程师的喜爱。通过 ASM 可以修改现有的字节码文件，也可以动态生成字节码文件，并且它是一款完全以字节码层面来操纵字节码并分析字节码的框架（此处可以联想一下写汇编代码时的酸爽）。</p>
+<p>举个例子，在 Java 中如果实现两个数相加操作，可以如下实现：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">add</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+  <span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> b <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> a <span class="token operator">+</span> b<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>但是如果使用 ASM 直接编写字节码指令，则有可能是如下几个字节码指令：</p>
+<p><img src="/images/android:jvm/java_chazhuang_add_class.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/java_chazhuang_add_class.png" class="lozad post-image"></p>
+<p>虽然上面的代码看起来很恐怖，但是没必要太过担心，因为有各种工具帮我们生成这些字节码指令。</p>
+<p>接下来就使用 ASM 来实现简单的编译插桩效果，通过插桩实现在每一个 Activity 打开时输出相应的 log 日志。</p>
+<h2 id="3-插桩实现"><a href="#3-插桩实现" class="headerlink" title="3. 插桩实现"></a>3. 插桩实现</h2><h3 id="3-1-实现思路"><a href="#3-1-实现思路" class="headerlink" title="3.1 实现思路"></a>3.1 实现思路</h3><p>过程主要包含两步：</p>
+<ol>
+<li><p>遍历项目中所有的 .class 文件<br> 如何找到项目中编译生成的所有 .class 文件，是我们需要解决的第一个问题。众所周知，Android Studio 使用 Gradle 编译项目中的 .java 文件，并且从 Gradle1.5.0 之后，我们可以自己定义 Transform，来获取所有 .class 文件引用。但是 Transform 的使用需要依赖 Gradle Plugin。因此我们第一步需要创建一个单独的 Gradle Plugin，并<strong>在 Gradle Plugin 中使用自定义 Transform 找出所有的 .class 文件</strong>。</p>
+</li>
+<li><p>遍历到目标 .class 文件 （Activity）之后，通过 ASM 动态注入需要被插入的字节码<br>如果第一步进行顺利，我们可以找出所有的 .class 文件。接下来就需要<strong>过滤出目标 Activity 文件，并在目标 Activity 文件的 onCreate 方法中，通过 ASM 插入相应的 log 日志字节码</strong>。</p>
+</li>
+</ol>
+<h3 id="3-2-具体实现"><a href="#3-2-具体实现" class="headerlink" title="3.2 具体实现"></a>3.2 具体实现</h3><ol>
+<li><strong>创建 ASMLifeCycleDemo 项目</strong><br>创建主项目 ASMLifeCycleDemo，当前项目中只有一个 MainActivity</li>
+</ol>
+<ol start="2">
+<li><p><strong>创建自定义 Gradle 插件</strong><br> 首先在 ASMLifeCycleDemo 项目中创建一个新的 module，并选择 Android Library 类型，命名为 asm_lifecycle_plugin。<br> 将 asm_lifecycle_plugin module 中除了 build.gradle 和 main 文件夹之外的所有内容都删除。然后在 main 目录下分别创建 groovy 和 java 目录</p>
+<p>因为 Gradle 插件是使用 groovy 语言编写的，所以需要新建一个 groovy 目录，用来存放插件相关的.groovy类。 但 ASM 是 java 层面的框架，所以在 java 目录里存放 ASM 相关的类。</p>
+</li>
+</ol>
+<p>  然后，在 groovy 中创建目录 cn.onestravel.plugin，并在此目录中创建类 LifeCyclePlugin.groovy 文件。在 LifeCyclePlugin 中重写 apply 方法，实现插件逻辑，因为是 demo 演示，所以我只是简单的打印 log 日志。</p>
+<pre class=" language-groovy"><code class="language-groovy"><span class="token keyword">package</span> cn<span class="token operator">.</span>onestravel<span class="token operator">.</span>plugin
+
+<span class="token keyword">import</span> org<span class="token operator">.</span>gradle<span class="token operator">.</span>api<span class="token operator">.</span>Plugin
+<span class="token keyword">import</span> org<span class="token operator">.</span>gradle<span class="token operator">.</span>api<span class="token operator">.</span>Project
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">LifeCyclePlugin</span> <span class="token keyword">implements</span> <span class="token class-name">Plugin</span><span class="token operator">&lt;</span>Project<span class="token operator">></span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">void</span> <span class="token function">apply</span><span class="token punctuation">(</span>Project project<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        System<span class="token operator">.</span>out<span class="token operator">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"==LifeCyclePlugin ===="</span><span class="token punctuation">)</span>
+
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>可以看出 LifeCyclePlugin 实现了 gradle api 中的 Plugin 接口。当我们在 app module 的 build.gradle 文件中使用此插件时，其 LifeCyclePlugin 的 apply 方法将会被自动调用。</p>
+<p>接下来，将 asm_lifecycle_plugin module 的 build.gradle 中的内容全部删掉，改为如下内容：</p>
+<pre class=" language-groovy"><code class="language-groovy">apply plugin<span class="token punctuation">:</span> <span class="token string">'groovy'</span>
+apply plugin<span class="token punctuation">:</span> <span class="token string">'maven'</span>
+
+
+dependencies <span class="token punctuation">{</span>
+    implementation <span class="token function">fileTree</span><span class="token punctuation">(</span>dir<span class="token punctuation">:</span> <span class="token string">"libs"</span><span class="token punctuation">,</span> include<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"*.jar"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    implementation <span class="token function">gradleApi</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    implementation <span class="token function">localGroovy</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    implementation <span class="token string">'com.android.tools.build:gradle:3.4.2'</span>
+
+<span class="token punctuation">}</span>
+
+group<span class="token operator">=</span><span class="token string">'cn.onestravel.plugin'</span>
+version<span class="token operator">=</span><span class="token string">'1.0.0'</span>
+
+uploadArchives<span class="token punctuation">{</span>
+    repositories <span class="token punctuation">{</span>
+        mavenDeployer<span class="token punctuation">{</span>
+           <span class="token function">repository</span><span class="token punctuation">(</span>url<span class="token punctuation">:</span><span class="token function">uri</span><span class="token punctuation">(</span><span class="token string">'../ams_lifecycle_repo'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>group 和 version 都需要在 app module 引用此插件时使用。</p>
+<p>所有的插件都需要被部署到 maven 库中，我们可以选择部署到远程或者本地。这里只是演示，所以只是将插件部署到本地目录中。具体地址通过 repository 属性配置，如图所示我将其配置在项目根目录下的 asm_lifecycle_repo 目录下。</p>
+<p>最后一步，创建 properties 文件。</p>
+<p>在 plugin/src/main 目录下新建目录 resources/META-INF/gradle-plugins，然后在此目录下新建一个文件：ones.asm.lifecycle.properties，其中文件名 ones.asm.lifecycle 就是我们自定义插件的名称，稍后我们在 app module 中会使用到此名称。</p>
+<p>在 .properties 文件中，需要指定我们自定义的插件类名 LifeCyclePlugin，如下所示：</p>
+<pre class=" language-properties"><code class="language-properties"><span class="token attr-name">implementation-class</span><span class="token punctuation">=</span><span class="token attr-value">cn.onestravel.plugin.LifeCyclePlugin</span></code></pre>
+<p>至此，自定义 Gradle 插件就已经写完，现在可以在 Android Studio 的右边栏找到 Gradle 中点击 uploadArchives，执行 plugin 的部署任务：</p>
+<p>可以看到，构建成功之后，在 Project 的根目录下将会出现一个 repo 目录，里面存放的就是我们的插件目标文件。</p>
+<p><img src="/images/android:jvm/class_plugin_repo.png" alt="image-20200821150609739" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_plugin_repo.png" class="lozad post-image"></p>
+<ol start="3">
+<li><p><strong>测试 asm_lifecycle_plugin</strong></p>
+<p>为了测试自定义的 Gradle 插件是否可用，可以在 app module 中的 build.gradle 中引用此插件。</p>
+<pre class=" language-groovy"><code class="language-groovy">apply plugin<span class="token punctuation">:</span> <span class="token string">'ones.asm.lifecycle'</span><span class="token comment" spellcheck="true">// 1. 自定义 Gradle 插件中 properties 的文件名</span>
+buildscript<span class="token punctuation">{</span>
+    repositories <span class="token punctuation">{</span>
+        <span class="token function">google</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token function">jcenter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        maven <span class="token punctuation">{</span>url <span class="token string">'../ams_lifecycle_repo'</span><span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    dependencies <span class="token punctuation">{</span>
+        classpath <span class="token string">'cn.onestravel.plugin:asm_lifecycle_plugin:1.0.0'</span> <span class="token comment" spellcheck="true">//2. group 值 + module 名 + version</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+android <span class="token punctuation">{</span>
+  <span class="token punctuation">...</span>
+<span class="token punctuation">}</span>
+dependencies<span class="token punctuation">{</span>
+  <span class="token punctuation">...</span>
+<span class="token punctuation">}</span></code></pre>
+</li>
+</ol>
+<p>然后在命令行中使用 gradlew 执行构建命令<code>./gradlew clean assembleDebug</code>，如果打印出我们自定义插件里的 log，则说明自定义 Gradle 插件可以使用：</p>
+<pre class=" language-powershell"><code class="language-powershell">➜  asmlifecycledemo <span class="token punctuation">.</span><span class="token operator">/</span>gradlew clean  assembleDebug
+Starting a Gradle Daemon <span class="token punctuation">(</span>subsequent builds will be faster<span class="token punctuation">)</span>
+
+> Configure project :asmlifecycledemo
+==LifeCyclePlugin ====
+<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span><span class="token operator">-</span>register  LifeCycleTransform
+
+
+BUILD SUCCESSFUL in 31s
+26 actionable tasks: 26 executed
+</code></pre>
+<ol start="4">
+<li><p><strong>自定义 Transform，实现遍历 .class 文件</strong></p>
+<p>自定义 Gradle 插件已经写好，接下来就需要实现遍历所有 .class 的逻辑。这部分功能主要依赖 Transform API。</p>
+</li>
+</ol>
+<p><strong>什么是 Transform ？</strong></p>
+<p>   <strong>Transform 可以被看作是 Gradle 在编译项目时的一个 task，在 .class 文件转换成 .dex 的流程中会执行这些 task，对所有的 .class 文件（可包括第三方库的 .class）进行转换，转换的逻辑定义在 Transform 的 transform 方法中。实际上平时我们在 build.gradle 中常用的功能都是通过 Transform 实现的，比如混淆（proguard）、分包（multi-dex）、jar 包合并（jarMerge）。</strong></p>
+<p><strong>自定义 Transform</strong></p>
+<p>在 cn.onestravel.plugin 目录中，新建 LifeCycleTransform.groovy，并继承 Transform 类。LifeCycleTransform 需要实现抽象类 Transform 中的抽象方法，具体有如下几个方法需要实现：</p>
+<pre class=" language-groovy"><code class="language-groovy"><span class="token keyword">package</span> cn<span class="token operator">.</span>onestravel<span class="token operator">.</span>plugin
+
+<span class="token keyword">import</span> com<span class="token operator">.</span>android<span class="token operator">.</span>build<span class="token operator">.</span>api<span class="token operator">.</span>transform<span class="token operator">.</span><span class="token operator">*</span>
+<span class="token keyword">import</span> com<span class="token operator">.</span>android<span class="token operator">.</span>build<span class="token operator">.</span>gradle<span class="token operator">.</span>internal<span class="token operator">.</span>pipeline<span class="token operator">.</span>TransformManager
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">LifeCycleTransform</span> <span class="token keyword">extends</span> <span class="token class-name">Transform</span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    String <span class="token function">getName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">"LifeCycleTransform"</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    Set<span class="token operator">&lt;</span>QualifiedContent<span class="token operator">.</span>ContentType<span class="token operator">></span> <span class="token function">getInputTypes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> TransformManager<span class="token operator">.</span>CONTENT_CLASS
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    Set<span class="token operator">&lt;</span><span class="token operator">?</span> <span class="token keyword">super</span> QualifiedContent<span class="token operator">.</span>Scope<span class="token operator">></span> <span class="token function">getScopes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> TransformManager<span class="token operator">.</span>PROJECT_ONLY
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">boolean</span> <span class="token function">isIncremental</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">void</span> <span class="token function">transform</span><span class="token punctuation">(</span>TransformInvocation transformInvocation<span class="token punctuation">)</span> <span class="token keyword">throws</span> TransformException<span class="token punctuation">,</span> InterruptedException<span class="token punctuation">,</span> IOException <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token operator">.</span><span class="token function">transform</span><span class="token punctuation">(</span>transformInvocation<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>getName</strong>：</p>
+<p>设置我们自定义的 Transform 对应的 Task 名称。Gradle 在编译的时候，会将这个名称显示在控制台上。比如：Task :app:transformClassesWithXXXForDebug。</p>
+<p><strong>getInputType</strong>：</p>
+<p>在项目中会有各种各样格式的文件，通过 getInputType 可以设置 LifeCycleTransform 接收的文件类型，此方法返回的类型是 Set&lt;QualifiedContent.ContentType&gt; 集合。</p>
+<p>ContentType 有以下 2 种取值。</p>
+<pre class=" language-java"><code class="language-java"> <span class="token comment" spellcheck="true">/**
+     * A content type that is requested through the transform API.
+     */</span>
+    <span class="token keyword">interface</span> <span class="token class-name">ContentType</span> <span class="token punctuation">{</span>
+
+        <span class="token comment" spellcheck="true">/**
+         * Content type name, readable by humans.
+         * @return the string content type name
+         */</span>
+        String <span class="token function">name</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">/**
+         * A unique value for a content type.
+         */</span>
+        <span class="token keyword">int</span> <span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * The type of of the content.
+     */</span>
+    <span class="token keyword">enum</span> DefaultContentType <span class="token keyword">implements</span> <span class="token class-name">ContentType</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/**
+         * The content is compiled Java code. This can be in a Jar file or in a folder. If
+         * in a folder, it is expected to in sub-folders matching package names.
+         */</span>
+        <span class="token function">CLASSES</span><span class="token punctuation">(</span><span class="token number">0x01</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+        <span class="token comment" spellcheck="true">/** The content is standard Java resources. */</span>
+        <span class="token function">RESOURCES</span><span class="token punctuation">(</span><span class="token number">0x02</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">int</span> value<span class="token punctuation">;</span>
+
+        <span class="token function">DefaultContentType</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>value <span class="token operator">=</span> value<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> value<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span></code></pre>
+<ul>
+<li>CLASSES：代表只检索 .class 文件；</li>
+<li>RESOURCES：代表检索 java 标准资源文件。</li>
+</ul>
+<p><strong>getScopes()</strong></p>
+<p>这个方法规定自定义 Transform 检索的范围，具体有以下几种取值：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">enum</span> Scope <span class="token keyword">implements</span> <span class="token class-name">ScopeType</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/** Only the project (module) content */</span>
+        <span class="token function">PROJECT</span><span class="token punctuation">(</span><span class="token number">0x01</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">/** Only the sub-projects (other modules) */</span>
+        <span class="token function">SUB_PROJECTS</span><span class="token punctuation">(</span><span class="token number">0x04</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">/** Only the external libraries */</span>
+        <span class="token function">EXTERNAL_LIBRARIES</span><span class="token punctuation">(</span><span class="token number">0x10</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">/** Code that is being tested by the current variant, including dependencies */</span>
+        <span class="token function">TESTED_CODE</span><span class="token punctuation">(</span><span class="token number">0x20</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">/** Local or remote dependencies that are provided-only */</span>
+        <span class="token function">PROVIDED_ONLY</span><span class="token punctuation">(</span><span class="token number">0x40</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+        <span class="token comment" spellcheck="true">/**
+         * Only the project's local dependencies (local jars)
+         *
+         * @deprecated local dependencies are now processed as {@link #EXTERNAL_LIBRARIES}
+         */</span>
+        <span class="token annotation punctuation">@Deprecated</span>
+        <span class="token function">PROJECT_LOCAL_DEPS</span><span class="token punctuation">(</span><span class="token number">0x02</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">/**
+         * Only the sub-projects's local dependencies (local jars).
+         *
+         * @deprecated local dependencies are now processed as {@link #EXTERNAL_LIBRARIES}
+         */</span>
+        <span class="token annotation punctuation">@Deprecated</span>
+        <span class="token function">SUB_PROJECTS_LOCAL_DEPS</span><span class="token punctuation">(</span><span class="token number">0x08</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">int</span> value<span class="token punctuation">;</span>
+
+        <span class="token function">Scope</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>value <span class="token operator">=</span> value<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">getValue</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> value<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span></code></pre>
+<p>*<em>isIncremental() *</em></p>
+<p>表示当前 Transform 是否支持增量编译，我们不需要增量编译，所以直接返回 false 即可。</p>
+<p><strong>transform()</strong></p>
+<p>在 自定义Transform 中最重要的方法就是 transform()。在这个方法中，可以获取到两个数据的流向。</p>
+<ul>
+<li>inputs：inputs 中是传过来的输入流，其中有两种格式，一种是 jar 包格式，一种是 directory（目录格式）。</li>
+<li>outputProvider：outputProvider 获取到输出目录，最后将修改的文件复制到输出目录，这一步必须做，否则编译会报错。</li>
+</ul>
+<p>我们可以实现一个简易 LifeCycleTransform，功能是打印出所有 .class 文件。代码如下：</p>
+<pre class=" language-groovy"><code class="language-groovy"><span class="token keyword">package</span> cn<span class="token operator">.</span>onestravel<span class="token operator">.</span>plugin
+
+<span class="token keyword">import</span> com<span class="token operator">.</span>android<span class="token operator">.</span>build<span class="token operator">.</span>api<span class="token operator">.</span>transform<span class="token operator">.</span><span class="token operator">*</span>
+<span class="token keyword">import</span> com<span class="token operator">.</span>android<span class="token operator">.</span>build<span class="token operator">.</span>gradle<span class="token operator">.</span>internal<span class="token operator">.</span>pipeline<span class="token operator">.</span>TransformManager
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">LifeCycleTransform</span> <span class="token keyword">extends</span> <span class="token class-name">Transform</span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    String <span class="token function">getName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">//1. 自定义的 Transform 名称为 LifeCycleTransform；</span>
+        <span class="token keyword">return</span> <span class="token string">"LifeCycleTransform"</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    Set<span class="token operator">&lt;</span>QualifiedContent<span class="token operator">.</span>ContentType<span class="token operator">></span> <span class="token function">getInputTypes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">//2. 检索项目中 .class 类型的目录或者文件；</span>
+        <span class="token keyword">return</span> TransformManager<span class="token operator">.</span>CONTENT_CLASS
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    Set<span class="token operator">&lt;</span><span class="token operator">?</span> <span class="token keyword">super</span> QualifiedContent<span class="token operator">.</span>Scope<span class="token operator">></span> <span class="token function">getScopes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">//3. 设置当前 Transform 检索范围为当前项目；</span>
+        <span class="token keyword">return</span> TransformManager<span class="token operator">.</span>PROJECT_ONLY
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">boolean</span> <span class="token function">isIncremental</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">void</span> <span class="token function">transform</span><span class="token punctuation">(</span>TransformInvocation transformInvocation<span class="token punctuation">)</span> <span class="token keyword">throws</span> TransformException<span class="token punctuation">,</span> InterruptedException<span class="token punctuation">,</span> IOException <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token operator">.</span><span class="token function">transform</span><span class="token punctuation">(</span>transformInvocation<span class="token punctuation">)</span>
+        Collection<span class="token operator">&lt;</span>TransformInput<span class="token operator">></span> inputs <span class="token operator">=</span> transformInvocation<span class="token operator">.</span>inputs
+        inputs<span class="token operator">.</span>each <span class="token punctuation">{</span> TransformInput transformInput <span class="token operator">-></span>
+            transformInput<span class="token operator">.</span>directoryInputs<span class="token operator">.</span>each <span class="token punctuation">{</span> DirectoryInput directoryInput <span class="token operator">-></span>
+                File dir <span class="token operator">=</span> directoryInput<span class="token operator">.</span>file
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>dir<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                  <span class="token comment" spellcheck="true">//4. 设置过滤文件为 .class 文件（去除文件夹类型），并打印文件名称。</span>
+                    Map<span class="token operator">&lt;</span>String<span class="token punctuation">,</span> Object<span class="token operator">></span> options <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">HashMap</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                    options<span class="token operator">.</span><span class="token function">put</span><span class="token punctuation">(</span><span class="token string">"type"</span><span class="token punctuation">,</span> groovy<span class="token operator">.</span>io<span class="token operator">.</span>FileType<span class="token operator">.</span>FILES<span class="token punctuation">)</span>
+                    options<span class="token operator">.</span><span class="token function">put</span><span class="token punctuation">(</span><span class="token string">"nameFilter"</span><span class="token punctuation">,</span> <span class="token operator">~</span><span class="token string">/.*\.class/</span><span class="token punctuation">)</span>
+                    dir<span class="token operator">.</span><span class="token function">traverse</span><span class="token punctuation">(</span>options<span class="token punctuation">)</span> <span class="token punctuation">{</span> file <span class="token operator">-></span>
+                        System<span class="token operator">.</span>out<span class="token operator">.</span><span class="token function">println</span><span class="token punctuation">(</span>file<span class="token operator">.</span>name<span class="token punctuation">)</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>解释说明：</p>
+<ol>
+<li>自定义的 Transform 名称为 LifeCycleTransform；</li>
+<li>检索项目中 .class 类型的目录或者文件；</li>
+<li>设置当前 Transform 检索范围为当前项目；</li>
+<li>设置过滤文件为 .class 文件（去除文件夹类型），并打印文件名称。</li>
+</ol>
+<p><strong>5. 将自定义的 LifeCycleTransform 注册到 Gradle 插件中</strong></p>
+<p>在 LifeCyclePlugin 中添加如下代码：</p>
+<pre class=" language-groovy"><code class="language-groovy"><span class="token keyword">package</span> cn<span class="token operator">.</span>onestravel<span class="token operator">.</span>plugin
+
+<span class="token keyword">import</span> com<span class="token operator">.</span>android<span class="token operator">.</span>build<span class="token operator">.</span>gradle<span class="token operator">.</span>AppExtension<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token operator">.</span>gradle<span class="token operator">.</span>api<span class="token operator">.</span>Plugin
+<span class="token keyword">import</span> org<span class="token operator">.</span>gradle<span class="token operator">.</span>api<span class="token operator">.</span>Project
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">LifeCyclePlugin</span> <span class="token keyword">implements</span> <span class="token class-name">Plugin</span><span class="token operator">&lt;</span>Project<span class="token operator">></span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">void</span> <span class="token function">apply</span><span class="token punctuation">(</span>Project project<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        System<span class="token operator">.</span>out<span class="token operator">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"==LifeCyclePlugin ===="</span><span class="token punctuation">)</span>
+
+
+        <span class="token keyword">def</span> android <span class="token operator">=</span> project<span class="token operator">.</span>extensions<span class="token operator">.</span><span class="token function">getByType</span><span class="token punctuation">(</span>AppExtension<span class="token punctuation">)</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">'------------------register  LifeCycleTransform'</span><span class="token punctuation">)</span>
+        LifeCycleTransform transform <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">LifeCycleTransform</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        android<span class="token operator">.</span><span class="token function">registerTransform</span><span class="token punctuation">(</span>transform<span class="token punctuation">)</span>
+
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>再次在命令行中执行 build 命令，可以看到 LifeCycleTransform 检索出的所有 .class 文件。</p>
+<pre class=" language-powershell"><code class="language-powershell">➜  asmlifecycledemo <span class="token punctuation">.</span><span class="token operator">/</span>gradlew clean assembleDebug
+Starting a Gradle Daemon <span class="token punctuation">(</span>subsequent builds will be faster<span class="token punctuation">)</span>
+
+> Configure project :asmlifecycledemo
+==LifeCyclePlugin ====
+<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span>-<span class="token operator">--</span><span class="token operator">-</span>register  LifeCycleTransform
+
+> Task :asmlifecycledemo:transformClassesWithLifeCycleTransformForDebug
+BuildConfig<span class="token punctuation">.</span><span class="token keyword">class</span>
+MainActivity<span class="token punctuation">.</span><span class="token keyword">class</span>
+
+BUILD SUCCESSFUL in 31s
+26 actionable tasks: 26 executed
+</code></pre>
+<p>可以看出，Gradle 编译时多了一个我们自定义的 LifeCycleTransform 类型的任务，并且将所有 .class 文件名打印出来，其中包含了我们需要的目标文件 MainActivity.class。</p>
+<h3 id="3-3-使用-ASM，插入字节码到-Activity-文件"><a href="#3-3-使用-ASM，插入字节码到-Activity-文件" class="headerlink" title="3.3 使用 ASM，插入字节码到 Activity 文件"></a>3.3 使用 ASM，插入字节码到 Activity 文件</h3><p>ASM 是一套开源框架，其中几个常用的 API 如下：</p>
+<ul>
+<li>ClassReader：负责解析 .class 文件中的字节码，并将所有字节码传递给 ClassWriter。</li>
+<li>ClassVisitor：负责访问 .class 文件中各个元素，还记得上一课时我们介绍的 .class 文件结构吗？ClassVisitor 就是用来解析这些文件结构的，当解析到某些特定结构时（比如类变量、方法），它会自动调用内部相应的 FieldVisitor 或者 MethodVisitor 的方法，进一步解析或者修改 .class 文件内容。</li>
+<li>ClassWriter：继承自 ClassVisitor，它是生成字节码的工具类，负责将修改后的字节码输出为 byte 数组。</li>
+</ul>
+<h4 id="3-3-1-添加-ASM-依赖"><a href="#3-3-1-添加-ASM-依赖" class="headerlink" title="3.3.1 添加 ASM 依赖"></a>3.3.1 添加 ASM 依赖</h4><p>在 asm_lifecycle_plugin 的 build.gradle 中，添加对 ASM 的依赖，如下：</p>
+<pre class=" language-groovy"><code class="language-groovy">apply plugin<span class="token punctuation">:</span> <span class="token string">'groovy'</span>
+apply plugin<span class="token punctuation">:</span> <span class="token string">'maven'</span>
+
+
+dependencies <span class="token punctuation">{</span>
+    implementation <span class="token function">fileTree</span><span class="token punctuation">(</span>dir<span class="token punctuation">:</span> <span class="token string">"libs"</span><span class="token punctuation">,</span> include<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"*.jar"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    implementation <span class="token function">gradleApi</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    implementation <span class="token function">localGroovy</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    implementation <span class="token string">'com.android.tools.build:gradle:3.4.2'</span>
+
+    <span class="token comment" spellcheck="true">//ASM 相关依赖</span>
+    implementation <span class="token string">'org.ow2.asm:asm:7.1'</span>
+    implementation <span class="token string">'org.ow2.asm:asm-commons:7.1'</span>
+
+<span class="token punctuation">}</span>
+
+group<span class="token operator">=</span><span class="token string">'cn.onestravel.plugin'</span>
+version<span class="token operator">=</span><span class="token string">'1.0.0'</span>
+
+uploadArchives<span class="token punctuation">{</span>
+    repositories <span class="token punctuation">{</span>
+        mavenDeployer<span class="token punctuation">{</span>
+           <span class="token function">repository</span><span class="token punctuation">(</span>url<span class="token punctuation">:</span><span class="token function">uri</span><span class="token punctuation">(</span><span class="token string">'../ams_lifecycle_repo'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20210728/9c2efe6aefcb/">https://blog.onestravel.cn/20210728/9c2efe6aefcb/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20210920/f8c53c115779/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">【并发编程】线程基础 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20210528/618470f841d8/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">【笔记三】字节码层面分析 class 文件结构 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E5%9B%9B%E3%80%91%E7%BC%96%E8%AF%91%E6%8F%92%E6%A1%A9%E6%93%8D%E7%BA%B5%E5%AD%97%E8%8A%82%E7%A0%81%EF%BC%8C%E5%AE%9E%E7%8E%B0%E4%B8%8D%E5%8F%AF%E8%83%BD%E5%AE%8C%E6%88%90%E7%9A%84%E4%BB%BB%E5%8A%A1"><span class="toc-text">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%BC%96%E8%AF%91%E6%8F%92%E6%A1%A9%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">1. 编译插桩是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%8F%92%E6%A1%A9%E5%B7%A5%E5%85%B7%E4%BB%8B%E7%BB%8D"><span class="toc-text">2. 插桩工具介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%8F%92%E6%A1%A9%E5%AE%9E%E7%8E%B0"><span class="toc-text">3. 插桩实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF"><span class="toc-text">3.1 实现思路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="toc-text">3.2 具体实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E4%BD%BF%E7%94%A8-ASM%EF%BC%8C%E6%8F%92%E5%85%A5%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%B0-Activity-%E6%96%87%E4%BB%B6"><span class="toc-text">3.3 使用 ASM，插入字节码到 Activity 文件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-%E6%B7%BB%E5%8A%A0-ASM-%E4%BE%9D%E8%B5%96"><span class="toc-text">3.3.1 添加 ASM 依赖</span></a></li></ol></li></ol></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E5%9B%9B%E3%80%91%E7%BC%96%E8%AF%91%E6%8F%92%E6%A1%A9%E6%93%8D%E7%BA%B5%E5%AD%97%E8%8A%82%E7%A0%81%EF%BC%8C%E5%AE%9E%E7%8E%B0%E4%B8%8D%E5%8F%AF%E8%83%BD%E5%AE%8C%E6%88%90%E7%9A%84%E4%BB%BB%E5%8A%A1"><span class="toc-text">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%BC%96%E8%AF%91%E6%8F%92%E6%A1%A9%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">1. 编译插桩是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%8F%92%E6%A1%A9%E5%B7%A5%E5%85%B7%E4%BB%8B%E7%BB%8D"><span class="toc-text">2. 插桩工具介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%8F%92%E6%A1%A9%E5%AE%9E%E7%8E%B0"><span class="toc-text">3. 插桩实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF"><span class="toc-text">3.1 实现思路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="toc-text">3.2 具体实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E4%BD%BF%E7%94%A8-ASM%EF%BC%8C%E6%8F%92%E5%85%A5%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%B0-Activity-%E6%96%87%E4%BB%B6"><span class="toc-text">3.3 使用 ASM，插入字节码到 Activity 文件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-%E6%B7%BB%E5%8A%A0-ASM-%E4%BE%9D%E8%B5%96"><span class="toc-text">3.3.1 添加 ASM 依赖</span></a></li></ol></li></ol></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E5%9B%9B%E3%80%91%E7%BC%96%E8%AF%91%E6%8F%92%E6%A1%A9%E6%93%8D%E7%BA%B5%E5%AD%97%E8%8A%82%E7%A0%81%EF%BC%8C%E5%AE%9E%E7%8E%B0%E4%B8%8D%E5%8F%AF%E8%83%BD%E5%AE%8C%E6%88%90%E7%9A%84%E4%BB%BB%E5%8A%A1"><span class="toc-text">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%BC%96%E8%AF%91%E6%8F%92%E6%A1%A9%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">1. 编译插桩是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%8F%92%E6%A1%A9%E5%B7%A5%E5%85%B7%E4%BB%8B%E7%BB%8D"><span class="toc-text">2. 插桩工具介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%8F%92%E6%A1%A9%E5%AE%9E%E7%8E%B0"><span class="toc-text">3. 插桩实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF"><span class="toc-text">3.1 实现思路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="toc-text">3.2 具体实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E4%BD%BF%E7%94%A8-ASM%EF%BC%8C%E6%8F%92%E5%85%A5%E5%AD%97%E8%8A%82%E7%A0%81%E5%88%B0-Activity-%E6%96%87%E4%BB%B6"><span class="toc-text">3.3 使用 ASM，插入字节码到 Activity 文件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-%E6%B7%BB%E5%8A%A0-ASM-%E4%BE%9D%E8%B5%96"><span class="toc-text">3.3.1 添加 ASM 依赖</span></a></li></ol></li></ol></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

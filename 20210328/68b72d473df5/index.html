@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>【笔记二】GC 回收机制和分代回收策略</title>
+  
+  
+  <meta property="og:title" content="【笔记二】GC 回收机制和分代回收策略">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20210328/68b72d473df5/index.html">
+  
+  
+  <meta property="og:img" content="/medias/avatar.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-03-28">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="JVM">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      【笔记二】GC 回收机制和分代回收策略
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-03-28T04:09:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-03-28</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/Android/" class="post-meta-link">Android</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>6.1k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/JVM/" class="post-meta-link">JVM</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="【笔记二】GC-回收机制和分代回收策略"><a href="#【笔记二】GC-回收机制和分代回收策略" class="headerlink" title="【笔记二】GC 回收机制和分代回收策略"></a>【笔记二】GC 回收机制和分代回收策略</h1><p>垃圾回收（Garbage Collection，简写为: GC）是 Java 开发者最关注的一块知识点。Java 语言开发者比 C 语言开发者幸福的地方就在于，不需要手动释放对象的内存，JVM 中的垃圾回收器（Garbage Collector）会为我们自动回收。但是也是又对应的代价的：一旦这种自动化机制出错，就必须区深入理解 GC 回收机制，甚至需要对这些 “自动化” 的技术实施必要的监控和调节。</p>
+<p>Java 内存运行时区域中<strong>程序计数器</strong>、<strong>虚拟机栈</strong>、<strong>本地方法栈</strong> 3 个区域随线程而生，随线程而灭；栈中的栈帧随着方法的进入和退出而有条不紊地执行着出栈和入栈操作，这几个区域内不需要过多考虑回收的问题。</p>
+<p>而<strong>堆</strong>和<strong>方法区</strong>则不一样，一个接口中的多个实现类需要的内存可能不一样，一个方法中的多个分支需要的内存也可能不一样，我们只有在程序处于运行期间时才能知道会创建哪些对象，这部分内存的分配和回收都是动态的，垃圾收集器所关注的就是这部分内存。</p>
+<h2 id="1-什么是垃圾"><a href="#1-什么是垃圾" class="headerlink" title="1. 什么是垃圾"></a>1. 什么是垃圾</h2><p>所谓垃圾就是内存中已经没有用的对象。既然是“垃圾回收”，那就需要知道哪些对象是垃圾。Java 虚拟机中使用一种叫做 “可达性分析” 的算法来决定对象是否可以被回收。</p>
+<h3 id="1-1-可达性分析"><a href="#1-1-可达性分析" class="headerlink" title="1.1 可达性分析"></a>1.1 可达性分析</h3><p>可达性分析算法是从离散数学图论引入的，JVM 把内存中对象的引用关系看做一张图，从一组叫做 “GC Root” 的对象作为起始点，从这些结点开始向下搜索，搜索走过的路径成为引用链，最后通过判断对象的引用链是否可达来决定对象是否可以被回收。如下图所示：</p>
+<img src="/images/android:jvm/gc_kdxfx.png" alt="img" style="zoom:67%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_kdxfx.png" class="lozad post-image">
+
+<p>如上图所示，对象 A、B、C、D、E 都与 “GC Root” 之间存在一条直接或者间接的引用链，这代表它们与 “GC Root” 之间是可达的，因此他们是不能被 GC 回收掉的。而对象 K 和对象 M 都被对象 J 所引用到，但是并不存在一条引用链连接他们和 “GC Root” ，所以当 GC 进行垃圾回收时，只要遍历到 J、K 、M 这三个对象，就会将他们回收掉。</p>
+<blockquote>
+<p>注意：上图中圆形图标虽然标记的是对象，但实际上代表该对象在内存中的引用。包括 “GC Root” 也是一组引用而并非对象。</p>
+</blockquote>
+<h3 id="GC-Root"><a href="#GC-Root" class="headerlink" title="GC Root"></a>GC Root</h3><p>在 Java 中，有一下几种对象可以作为 GC Root:</p>
+<ul>
+<li>Java 虚拟机栈（局部变量表）中引用的对象；</li>
+<li>方法区中静态引用指向的对象；</li>
+<li>仍处于存货状态中的对象；</li>
+<li>Native 中 JNI 引用的对象。</li>
+</ul>
+<h2 id="2-什么时候回收"><a href="#2-什么时候回收" class="headerlink" title="2. 什么时候回收"></a>2. 什么时候回收</h2><p>不同的虚拟机有着不同的 GC 实现机制，但是一般情况下每一种 GC 的实现都会再以下两种情况触发垃圾回收。</p>
+<ol>
+<li>Allocation Failure：再堆内存分配时，如果因为剩余可用空间不足导致对象内存分配失败，这时候系统会触发依次 GC。</li>
+<li>System.gc()：在应用层，Java 开发工程师可以主动调用此 API 来请求依次  GC 。</li>
+</ol>
+<h2 id="3-代码验证-GC-Root-的几种情况"><a href="#3-代码验证-GC-Root-的几种情况" class="headerlink" title="3. 代码验证 GC Root 的几种情况"></a>3. 代码验证 GC Root 的几种情况</h2><p>现在我们了解了 Java 中的 GC Root ，以及何时触发 GC 。接下来就通过几个案例来验证 GC Root 的几种情况。在看代码之前，先了解一下执行 Java 命令时的参数。</p>
+<blockquote>
+<p>-Xms 初始分配 JVM 运行时的内存大小，如果不指定，默认为物理内存的 1/64。</p>
+</blockquote>
+<p>比如我们运行如下命令执行 HelloWord 程序，从物理内存中分配出 200M 空间分配给 JVM 内存。</p>
+<pre class=" language-shell"><code class="language-shell">java -Xms200m HelloWorld</code></pre>
+<h3 id="3-1-验证虚拟机栈（栈帧中局部变量）中引用对象作为-GC-Root"><a href="#3-1-验证虚拟机栈（栈帧中局部变量）中引用对象作为-GC-Root" class="headerlink" title="3.1 验证虚拟机栈（栈帧中局部变量）中引用对象作为 GC Root"></a>3.1 <strong>验证虚拟机栈（栈帧中局部变量）中引用对象作为 GC Root</strong></h3><p>运行如下代码：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">GCRootLocalVariable</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">int</span> _10MB <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> <span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> memory <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">8</span> <span class="token operator">*</span> _10MB<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"开始时:"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span><span class="token function">gc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"第二次GC完成"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        GCRootLocalVariable g <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">GCRootLocalVariable</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span><span class="token function">gc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"第一次GC完成"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 打印出当前JVM剩余空间和总的空间大小
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">print</span><span class="token punctuation">(</span><span class="token string">"free is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">freeMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"total is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">totalMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>日志如下：</p>
+<pre class=" language-verilog"><code class="language-verilog">开始时<span class="token punctuation">:</span>
+free is <span class="token number">242</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span>
+第一次GC完成
+free is <span class="token number">163</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span>
+第二次GC完成
+free is <span class="token number">243</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span></code></pre>
+<p>分析：</p>
+<ol>
+<li>当第一次 GC 时，g 作为局部变量（new 出来的80M对象）的引用，并且它作为 GC Root ，在调用 GC 后，并不会被 GC 回收</li>
+<li>当第二次 GC 时，<code>method()</code> 方法执行完成后，局部变量 g 跟随方法消失，不再有引用类型执行该 80M 对象，所以第二次 GC 时会被回收。</li>
+</ol>
+<blockquote>
+<p>注意：上面的日志包括后面的实例中，因为有中间变量，所以会有1M 左右的误差，不影响进行  GC 分析。</p>
+</blockquote>
+<h3 id="3-2-验证方法区中的静态变量引用的对象作为-GC-Root"><a href="#3-2-验证方法区中的静态变量引用的对象作为-GC-Root" class="headerlink" title="3.2 验证方法区中的静态变量引用的对象作为 GC Root"></a>3.2 <strong>验证方法区中的静态变量引用的对象作为 GC Root</strong></h3><p>运行如下代码：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">GCRootStaticVariable</span><span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">int</span> _10MB <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> <span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> memory<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> GCRootStaticVariable staticVariable<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">GCRootStaticVariable</span><span class="token punctuation">(</span><span class="token keyword">int</span> size<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        memory <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span>size<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"程序开始:"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        GCRootStaticVariable g <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">GCRootStaticVariable</span><span class="token punctuation">(</span><span class="token number">4</span> <span class="token operator">*</span> _10MB<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        g<span class="token punctuation">.</span>staticVariable <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">GCRootStaticVariable</span><span class="token punctuation">(</span><span class="token number">8</span> <span class="token operator">*</span> _10MB<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 将g置为null, 调用GC时可以回收此对象内存</span>
+        g <span class="token operator">=</span> null<span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span><span class="token function">gc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"GC完成"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 打印出当前JVM剩余空间和总的空间大小
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">print</span><span class="token punctuation">(</span><span class="token string">"free is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">freeMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"total is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">totalMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>打印结果如下：</p>
+<pre class=" language-verilog"><code class="language-verilog">程序开始<span class="token punctuation">:</span>
+free is <span class="token number">242</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span>
+GC完成
+free is <span class="token number">163</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span></code></pre>
+<p>分析：</p>
+<p>程序刚开始运行时内存为 242M ，并分别创建了 g 对象（40M），初始化了 g 对象内部的静态变量 staticVariable 对象（80M）。当调用 GC 时，g 对象引用为置为 null , 该40M 对象被 GC 回收，而 staticVariable 对象（80M）作为 GC Root ，它引用的 80M 对应并未被回收。</p>
+<h3 id="3-3-验证活跃线程作为-GC-Root"><a href="#3-3-验证活跃线程作为-GC-Root" class="headerlink" title="3.3 验证活跃线程作为 GC Root"></a>3.3 <strong>验证活跃线程作为 GC Root</strong></h3><p>运行如下代码</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">GCRootThread</span><span class="token punctuation">{</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">int</span> _10MB <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> <span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> memory <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">8</span> <span class="token operator">*</span> _10MB<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> Exception <span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"开始前内存情况:"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        AsyncTask at <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">AsyncTask</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">GCRootThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        Thread thread <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Thread</span><span class="token punctuation">(</span>at<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        thread<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span><span class="token function">gc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"main方法执行完毕，完成GC"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        thread<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        at <span class="token operator">=</span> null<span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span><span class="token function">gc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"线程代码执行完毕，完成GC"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 打印出当前JVM剩余空间和总的空间大小
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">print</span><span class="token punctuation">(</span><span class="token string">"free is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">freeMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"total is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">totalMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">AsyncTask</span> <span class="token keyword">implements</span> <span class="token class-name">Runnable</span> <span class="token punctuation">{</span>
+        <span class="token keyword">private</span> GCRootThread gcRootThread<span class="token punctuation">;</span>
+
+        <span class="token keyword">public</span> <span class="token function">AsyncTask</span><span class="token punctuation">(</span>GCRootThread gcRootThread<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>gcRootThread <span class="token operator">=</span> gcRootThread<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">try</span><span class="token punctuation">{</span>
+                Thread<span class="token punctuation">.</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">500</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">catch</span><span class="token punctuation">(</span>Exception e<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>打印日志如下：</p>
+<pre class=" language-java"><code class="language-java">开始前内存情况<span class="token operator">:</span>
+free is <span class="token number">242</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span>
+main方法执行完毕，完成GC
+free is <span class="token number">163</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span>
+线程代码执行完毕，完成GC
+free is <span class="token number">243</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span></code></pre>
+<p>分析：</p>
+<p>程序刚开始时是 242M 内存，当调用第一次 GC 时线程并没有执行结束，并且它作为 GC Root，所以它所引用的 80M 内存并不会被 GC 回收掉。 thread.join() 保证线程结束再调用后续代码，所以当调用第二次 GC 时，线程已经执行完毕并被置为 null，这时线程已经被销毁，所以之前它所引用的 80M 此时会被 GC 回收掉。</p>
+<h3 id="3-4-测试成员变量是否可以作为-GC-Root"><a href="#3-4-测试成员变量是否可以作为-GC-Root" class="headerlink" title="3.4 测试成员变量是否可以作为 GC Root"></a>3.4 <strong>测试成员变量是否可以作为 GC Root</strong></h3><p>运行如下代码：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">GCRootClassVariable</span><span class="token punctuation">{</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">int</span> _10MB <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> <span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> memory<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> GCRootClassVariable classVariable<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">GCRootClassVariable</span><span class="token punctuation">(</span><span class="token keyword">int</span> size<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        memory <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span>size<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"程序开始:"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        GCRootClassVariable g <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">GCRootClassVariable</span><span class="token punctuation">(</span><span class="token number">4</span> <span class="token operator">*</span> _10MB<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        g<span class="token punctuation">.</span>classVariable <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">GCRootClassVariable</span><span class="token punctuation">(</span><span class="token number">8</span> <span class="token operator">*</span> _10MB<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        g <span class="token operator">=</span> null<span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span><span class="token function">gc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"GC完成"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 打印出当前JVM剩余空间和总的空间大小
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">printMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">print</span><span class="token punctuation">(</span><span class="token string">"free is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">freeMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"total is "</span> <span class="token operator">+</span> Runtime<span class="token punctuation">.</span><span class="token function">getRuntime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">totalMemory</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">1024</span><span class="token operator">/</span><span class="token number">1024</span> <span class="token operator">+</span> <span class="token string">" M, "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>打印日志如下：</p>
+<pre class=" language-verilog"><code class="language-verilog">程序开始<span class="token punctuation">:</span>
+free is <span class="token number">242</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span>
+GC完成
+free is <span class="token number">243</span> M<span class="token punctuation">,</span> total is <span class="token number">245</span> M<span class="token punctuation">,</span></code></pre>
+<p>分析：</p>
+<p>从上面日志中可以看出当调用 GC 时，因为 g 已经置为 null，因此 g 中的全局变量 classVariable 此时也不再被 GC Root 所引用。所以最后 g(40M) 和 classVariable(80M) 都会被回收掉。这也表明<strong>全局变量同静态变量不同，它不会被当作 GC Root</strong>。</p>
+<blockquote>
+<p>上面演示的这几种情况往往也是内存泄漏发生的场景，设想一下我们将各个 Test 类换成 Android 中的 Activity 的话将导致 Activity 无法被系统回收，而一个 Activity 中的数据往往是较大的，因此内存泄漏导致 Activity 无法回收还是比较致命的。</p>
+</blockquote>
+<h2 id="4-如何进行垃圾回收"><a href="#4-如何进行垃圾回收" class="headerlink" title="4. 如何进行垃圾回收"></a>4. 如何进行垃圾回收</h2><p>由于垃圾收集算法的实现涉及大量的程序细节，各家虚拟机厂商对其实现细节各不相同，下面介绍几种算法的思想以及优缺点。</p>
+<h3 id="4-1-标记清除算法（Mark-and-Sweep-GC）"><a href="#4-1-标记清除算法（Mark-and-Sweep-GC）" class="headerlink" title="4.1 标记清除算法（Mark and Sweep GC）"></a>4.1 标记清除算法（Mark and Sweep GC）</h3><p>从 GC Roots 集合开始，将内存整个遍历一次，保留所有可以被 GC Roots 直接或间接引用到的对象，而剩下的对象都作为垃圾对待并回收，可以分为以下两步：</p>
+<ol>
+<li><strong>Mark 标记阶段</strong>：找到内存中所以 GC Root 对象，将和 GC Root 直接或间接引用的对象标记为灰色（存活对象），否则标记位黑色（垃圾对象）。</li>
+<li><strong>Sweep 清除阶段</strong>：遍历完内存中所以对象后，直接将标记为垃圾的对象清除。</li>
+</ol>
+<img src="/images/android:jvm/gc_mark_sweep.png" alt="img" style="zoom:80%;background-color:#fff" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_mark_sweep.png" class="lozad post-image">
+
+<p>优缺点分析：</p>
+<p><strong>优点</strong>：实现简单，不需要将对象进行移动</p>
+<p><strong>缺点</strong>：这个算法需要中断进程内其他组件的执行（stop the world），并可能产生内存碎片，提高了垃圾回收的频率。</p>
+<h3 id="4-2-复制算法（Copying）"><a href="#4-2-复制算法（Copying）" class="headerlink" title="4.2 复制算法（Copying）"></a>4.2 复制算法（Copying）</h3><p>将现有的内存分为两块，每次只使用其中一块；在垃圾回收时，将正在使用的内存块中存活的对象复制到未被使用的内存块中；之后将正在使用的内存块中的所有对象进行清除，交换两个内存块的角色，完成垃圾回收。 </p>
+<ol>
+<li><p>复制算法之前，内存分为 A/B 两块，并且当前只使用内存 A，内存的状况如下图所示：</p>
+<p><img src="/images/android:jvm/gc_copying.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_copying.png" class="lozad post-image"></p>
+</li>
+<li><p>标记完之后，所有可达对象都被按次序复制到内存 B 中，并设置 B 为当前使用中的内存。内存状况如下图所示：</p>
+<p><img src="/images/android:jvm/gc_copying_2.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_copying_2.png" class="lozad post-image"></p>
+</li>
+</ol>
+<p>优缺点分析：</p>
+<p><strong>优点</strong>：按顺序分配内存即可，实现简单、运行高效，不用考虑内存碎片。<br><strong>缺点</strong>：可用的内存大小缩小为原来的一半，对象存活率高时会频繁进行复制。</p>
+<h3 id="4-3-标记-压缩算法（Mark-Compact）"><a href="#4-3-标记-压缩算法（Mark-Compact）" class="headerlink" title="4.3 标记-压缩算法（Mark-Compact）"></a>4.3 标记-压缩算法（Mark-Compact）</h3><p>需要从根节点开始对所有可达对象做一次标记，之后，它不简单清理未标记对象，而是将所有存活对象压缩到内存的一端。最后，清理边界外所有空间。因此，标记压缩算法也分两步进行：</p>
+<ol>
+<li><p><strong>Mark 标记阶段</strong>：找到内存中所以 GC Root 对象，只要是和 GC Root 对象直接或间接相连的标记位灰色（存活对象），否则标记位黑色（回收垃圾对象）。</p>
+</li>
+<li><p><strong>Compact 压缩阶段</strong>：将剩余存活对象按顺序压缩到内存的某一端。</p>
+<img src="/images/android:jvm/gc_mark_compact.png" alt="img" style="zoom:80%;background-color:#fff" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_mark_compact.png" class="lozad post-image">
+
+</li>
+</ol>
+<p>优缺点分析：</p>
+<p><strong>优点</strong>：这种方法既避免了内存碎片的产生，又不需要两块相同的内存空间，因此，其性价比比较高</p>
+<p><strong>缺点</strong>：所谓压缩操作，需要对局部对象进行移动，所以，一定程度上还是降低了效率。</p>
+<h3 id="4-4-JVM-分代回收策略"><a href="#4-4-JVM-分代回收策略" class="headerlink" title="4.4 JVM 分代回收策略"></a>4.4 JVM 分代回收策略</h3><p>Java 虚拟机根据内存中对象的存活周期的不同，把内存划分为几块；一般分为<strong>新生代、老年代</strong>，这就是 JVM 的分代回收策略。<strong>在 HotSpot 中，除了新生代和老年代还有永久代。</strong></p>
+<p>分代回收的中心思想就是：对于新创建的对象会在新生代区域分配内存，此区域的对象生命周期一般比较短。如果经过多次回收仍然存活下来则将它们转移到老年代区域中。</p>
+<p><strong>新生代（年轻代 Young Generation）</strong></p>
+<p>新生成的对象优先存放在新生代区域中，新生代对象朝生夕死，存活率很低，在新生代中，常规应用进行一次垃圾回收一般可以回收70%~95% 的空间，回收率很高。新生代区域中需要一些复制操作，所以在新生代区域中使用的垃圾回收算法是复制算法。</p>
+<p>新生代区域又可以继续细分为3部分：<strong>Eden、Survivor0（简称 S0）、Survivor1（简称 S1）</strong>。这三部分按照8 : 1 : 1 的比例来划分。这3块内存区域的分配如下：</p>
+<p>绝大多数刚刚被创建的对象会存放在 Eden 区。如图所示：</p>
+<img src="/images/android:jvm/gc_young_eden.png" alt="img" style="zoom:80%;background-color:#fff" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_young_eden.png" class="lozad post-image">
+
+<p>当 <strong>Eden</strong> 区第一次满的时候，会进行垃圾回收。首先将 <strong>Eden</strong> 区的垃圾对象回收清除，并将存活的对象复制到 <strong>S0</strong> ，此时 <strong>S1</strong> 时空的。如图所示：</p>
+<img src="/images/android:jvm/gc_young_s0.png" alt="img" style="zoom:80%;background-color:#fff" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_young_s0.png" class="lozad post-image">
+
+<p>下一次 <strong>Eden</strong> 区满时，在进行一次垃圾回收。此时将 <strong>Eden</strong> 区和 <strong>S0</strong> 区中的垃圾对象进行回收清除，并将存活对象复制到 <strong>S1</strong> 区，此时 <strong>S0</strong> 是空的。如图所示：</p>
+<img src="/images/android:jvm/gc_young_s1.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_young_s1.png" class="lozad post-image">
+
+<p>如此反复在 <strong>S0</strong> 和 <strong>S1</strong> 切换几次（默认15次）之后，如果还有存活对象。说明这些对象的生命周期较长，则将他们转移到老年代中。如图所示：</p>
+<img src="/images/android:jvm/gc_old.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/gc_old.png" class="lozad post-image">
+
+<p><strong>老年代</strong></p>
+<p>一个对象在如果在新生代区域存活了足够长时间没有被清理掉，则会被复制到老年代。老年代的内存大小一般比新生代大，能存放更多的对象。如果对象比较大（字符串或大数组），并且新生代剩余空间不足，则这个大对象会被直接分配到老年代。</p>
+<p>我们可以使用 <code>-XX:PretenureSizeThreshold</code> 来控制直接升入老年代对象的大小，大于这个值的对象会直接分配到老年代区域。老年代因为生命周期比较长，不需要过多的复制操作，，所以一般采用标记-压缩的回收算法。</p>
+<blockquote>
+<p>注意：对于老年代，可能存在这么一种情况，老年代中的对象有时候会引用到新生代中的对象。如果这时候要执行 GC ，则可能需要查询整个老年代上可能存在引用新生代中的对象的情况，这显然是低效的。所以，老年代中维护了一个 512 byte 的card table，所有老年代对象引用新生代对象的信息都记录在这里。每当新生代 GC 发生时，只需要检查这个 card table 即可，大大提高了性能。</p>
+</blockquote>
+<h2 id="5-GC-log-分析"><a href="#5-GC-log-分析" class="headerlink" title="5. GC log 分析"></a>5. GC log 分析</h2><p>为了让上层应用开发人员更方便的调试 Java 程序，JVM 提供了相应的 GC 日志。在 GC 执行垃圾回收时间过程中，会有各种相应的 log 被打印出来。其中新生代和老年代打印出来的 log 日志是有区别的。</p>
+<ul>
+<li>新生代 GC ：这一区域的 GC 叫做 Minor GC。因为 Java 对象大都具备朝生夕灭的特性，所以 Minor GC 非常频繁，一般回收速度也比较快。</li>
+<li>老年代 GC：发生在这一区域的 GC 叫做 Major GC 或者 Full GC。当出现了 Major GC，经常会伴随至少一次的 Minor GC。</li>
+</ul>
+<blockquote>
+<p>注意：在有些虚拟机实现中，Major GC 和 Full GC 还是有一定的区别的。Major GC 只是代表回收老年代区域的内存，Full GC 代表回收整个堆中的内存，也就是新生代+老年代。</p>
+</blockquote>
+<p>首先我们需要先理解几个 Java 命令参数</p>
+<table>
+<thead>
+<tr>
+<th>命令参数</th>
+<th>功能描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-verbose:gc</td>
+<td>显示 GC 的操作内容</td>
+</tr>
+<tr>
+<td>-Xms20M</td>
+<td>初始化堆大小为20M</td>
+</tr>
+<tr>
+<td>-Xmx20M</td>
+<td>设置堆最大分配内存20M</td>
+</tr>
+<tr>
+<td>-Xmn10M</td>
+<td>设置新生代内存大小为10M</td>
+</tr>
+<tr>
+<td>-XX:+printGCDetails</td>
+<td>打印 GC 的详细 log 日志</td>
+</tr>
+<tr>
+<td>-XX:SurvivorRatio=8</td>
+<td>新生代中的 Eden 区域与Survivor 区域的大小比值为 8:1:1</td>
+</tr>
+</tbody></table>
+<p>使用如下代码，在内存中创建 4 个 byte 类型数组来演示内存分配与 GC 的详细过程。代码如下：</p>
+<pre class=" language-java"><code class="language-java"><span class="token comment" spellcheck="true">/**
+* VM agrs: -Xms20M -Xmx20M -Xmn10M -XX:+PrintGCDetails
+* -XX:SurvivorRatio=8
+*/</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">MinorGCTest</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> _1MB <span class="token operator">=</span> <span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">testAllocation</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> a1<span class="token punctuation">,</span> a2<span class="token punctuation">,</span> a3<span class="token punctuation">,</span> z4<span class="token punctuation">;</span>
+        a1 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">2</span> <span class="token operator">*</span> _1MB<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        a2 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">2</span> <span class="token operator">*</span> _1MB<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        a3 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">2</span> <span class="token operator">*</span> _1MB<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        a4 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">1</span> <span class="token operator">*</span> _1MB<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> agrs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">testAllocation</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>通过上面的参数可以看出堆内存总大小为 20M，其中新生代占 10M，剩下的10M 会自动分配给老年代。执行上面代码打印日志如下：</p>
+<pre class=" language-verilog"><code class="language-verilog">Heap
+PSYoungGen      total <span class="token number">9216</span>K<span class="token punctuation">,</span> used <span class="token number">8003</span>K <span class="token punctuation">[</span><span class="token number">0</span>x00000007bf600000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007c0000000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007c0000000<span class="token punctuation">)</span>
+  eden space <span class="token number">8192</span>K<span class="token punctuation">,</span> <span class="token number">97</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bf600000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bfdd0ed8<span class="token punctuation">,</span><span class="token number">0</span>x00000007bfe00000<span class="token punctuation">)</span>
+  from space <span class="token number">1024</span>K<span class="token punctuation">,</span> <span class="token number">0</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bff00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bff00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007c0000000<span class="token punctuation">)</span>
+  to   space <span class="token number">1024</span>K<span class="token punctuation">,</span> <span class="token number">0</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bfe00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bfe00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bff00000<span class="token punctuation">)</span>
+ParOldGen       total <span class="token number">10240</span>K<span class="token punctuation">,</span> used <span class="token number">0</span>K <span class="token punctuation">[</span><span class="token number">0</span>x00000007bec00000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007bf600000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007bf600000<span class="token punctuation">)</span>
+  object space <span class="token number">10240</span>K<span class="token punctuation">,</span> <span class="token number">0</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bec00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bec00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bf600000<span class="token punctuation">)</span>
+Metaspace       used <span class="token number">2631</span>K<span class="token punctuation">,</span> capacity <span class="token number">4486</span>K<span class="token punctuation">,</span> committed <span class="token number">4864</span>K<span class="token punctuation">,</span> reserved <span class="token number">1056768</span>K
+  <span class="token keyword">class</span> space    used <span class="token number">286</span>K<span class="token punctuation">,</span> capacity <span class="token number">386</span>K<span class="token punctuation">,</span> committed <span class="token number">512</span>K<span class="token punctuation">,</span> reserved <span class="token number">1048576</span>K</code></pre>
+<p>日志中的各字段代表意义如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PSYoungGen</td>
+<td>新生代</td>
+</tr>
+<tr>
+<td>eden</td>
+<td>新生代中的 Eden 区</td>
+</tr>
+<tr>
+<td>from</td>
+<td>新生代中的 S0 区</td>
+</tr>
+<tr>
+<td>to</td>
+<td>新生代中的 S1 区</td>
+</tr>
+<tr>
+<td>ParOldGen</td>
+<td>老年代</td>
+</tr>
+</tbody></table>
+<p>从日志中可以看出：程序执行完之后，a1，a2，a3，a4 四个对象都被分配在了新生代的 Eden 区。</p>
+<p>如果我们将测试代码中的 a4 初始化改为 ``a4 = new byte[2*_1M]，则打印日志如下：</p>
+<pre class=" language-verilog"><code class="language-verilog"><span class="token punctuation">[</span>GC <span class="token punctuation">(</span>Allocation Failure<span class="token punctuation">)</span> <span class="token punctuation">[</span>PSYoungGen<span class="token punctuation">:</span> <span class="token number">6815</span>K<span class="token operator">-></span><span class="token function">480K</span><span class="token punctuation">(</span><span class="token number">9216</span>K<span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token number">6815</span>K<span class="token operator">-></span><span class="token function">6632K</span><span class="token punctuation">(</span><span class="token number">19456</span>K<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0.0067344</span> secs<span class="token punctuation">]</span> <span class="token punctuation">[</span>Times<span class="token punctuation">:</span> user<span class="token operator">=</span><span class="token number">0.04</span> sys<span class="token operator">=</span><span class="token number">0.00</span><span class="token punctuation">,</span> <span class="token keyword">real</span><span class="token operator">=</span><span class="token number">0.01</span> secs<span class="token punctuation">]</span>
+Heap
+PSYoungGen      total <span class="token number">9216</span>K<span class="token punctuation">,</span> used <span class="token number">2130</span>K <span class="token punctuation">[</span><span class="token number">0</span>x00000007bf600000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007c0000000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007c0000000<span class="token punctuation">)</span>
+  eden space <span class="token number">8192</span>K<span class="token punctuation">,</span> <span class="token number">26</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bf600000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bf814930<span class="token punctuation">,</span><span class="token number">0</span>x00000007bfe00000<span class="token punctuation">)</span>
+  from space <span class="token number">1024</span>K<span class="token punctuation">,</span> <span class="token number">0</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bfe00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bfe00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bff00000<span class="token punctuation">)</span>
+  to   space <span class="token number">1024</span>K<span class="token punctuation">,</span> <span class="token number">0</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bff00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bff00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007c0000000<span class="token punctuation">)</span>
+ParOldGen       total <span class="token number">10240</span>K<span class="token punctuation">,</span> used <span class="token number">6420</span>K <span class="token punctuation">[</span><span class="token number">0</span>x00000007bec00000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007bf600000<span class="token punctuation">,</span> <span class="token number">0</span>x00000007bf600000<span class="token punctuation">)</span>
+  object space <span class="token number">10240</span>K<span class="token punctuation">,</span> <span class="token number">62</span><span class="token operator">%</span> used <span class="token punctuation">[</span><span class="token number">0</span>x00000007bec00000<span class="token punctuation">,</span><span class="token number">0</span>x00000007bf2450d0<span class="token punctuation">,</span><span class="token number">0</span>x00000007bf600000<span class="token punctuation">)</span>
+Metaspace       used <span class="token number">2632</span>K<span class="token punctuation">,</span> capacity <span class="token number">4486</span>K<span class="token punctuation">,</span> committed <span class="token number">4864</span>K<span class="token punctuation">,</span> reserved <span class="token number">1056768</span>K
+  <span class="token keyword">class</span> space    used <span class="token number">286</span>K<span class="token punctuation">,</span> capacity <span class="token number">386</span>K<span class="token punctuation">,</span> committed <span class="token number">512</span>K<span class="token punctuation">,</span> reserved <span class="token number">1048576</span>K</code></pre>
+<p>这是因为在给 a4 分配内存之前，Eden 区已经被占用6M。已经无法再分配出 2M 来存储 a4 对象。因此会执行一次 Minor GC，并尝试将存活的 a1，a2，a3 对象复制到 S1 区。但是 S1区只有1M 空间，所以没有办法存储a1、a2、a3 任意一个对象。在这种情况下，a1、a2、a3 被转移到老年代，最后将 a4 存储在 Eden 区。所以最终的结果就是：<strong>Eden 区占用2M(a4)，老年代占用6M（a1,a2,a3）。</strong></p>
+<h2 id="6-引用"><a href="#6-引用" class="headerlink" title="6. 引用"></a>6. 引用</h2><p>上面说过，判断对象是否存活是通过 GC Roots 的引用可达性来判断的。但 JVM 中的引用关系不止一种，而是有四种，根据引用由强到弱，他们分别是：<strong>强引用（Strong Reference）、软引用（Soft Reference）、弱引用（Weak Reference）、虚引用（Phantom Reference）。</strong></p>
+<p>四种引用的简单对比：</p>
+<table>
+<thead>
+<tr>
+<th>引用</th>
+<th>GC 回收时机</th>
+<th>使用示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>强引用</td>
+<td>如果一个对象具有强引用，那垃圾回收器绝不会回收它</td>
+<td>Object obj = new Object();</td>
+</tr>
+<tr>
+<td>软引用</td>
+<td>内存实在不足时，会对软引用进行回收</td>
+<td>SoftReference<Object> softObj = new SoftReference();</td>
+</tr>
+<tr>
+<td>弱引用</td>
+<td>第一次垃圾回收时，如果垃圾回收器遍历到此弱引用，则将其回收</td>
+<td>WeakReference<Object> weakObj = new WeakReference();</td>
+</tr>
+<tr>
+<td>虚引用</td>
+<td>一个对象是否有虚引用的存在，完全不会对其生存时间造成影响，也无法通过虚引用来获取一个对象的实例</td>
+<td>不会使用</td>
+</tr>
+</tbody></table>
+<p>平时项目中，尤其是Android项目，因为有大量的图像(Bitmap)对象，使用软引用的场景较多。所以重点看下软引用SoftReference的使用，不当的使用软引用有时也会导致系统异常。</p>
+<p><strong>软引用常规使用</strong></p>
+<p> 常规使用代码如下</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">SoftReferenceNormal</span> <span class="token punctuation">{</span>
+  <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">SoftObject</span> <span class="token punctuation">{</span>
+    <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> data <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">120</span> <span class="token operator">*</span> <span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//120M</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> InterruptedException <span class="token punctuation">{</span>
+    SoftReference<span class="token operator">&lt;</span>SoftObject<span class="token operator">></span> cacheRef <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SoftReference</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">SoftObject</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"第一次 GC 前，软引用："</span><span class="token operator">+</span>cacheRef<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"第一次 GC 后，软引用："</span><span class="token operator">+</span>cacheRef<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">//再分配一个120M 对象</span>
+    SoftObject newSo <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SoftObject</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"再次分配120M 强引用对象后，软引用："</span><span class="token operator">+</span>cacheRef<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>执行上述代码，打印日志如下：</p>
+<pre class=" language-shell"><code class="language-shell">$ java -Xmx200m SoftReferenceNormal
+第一次 GC 前，软引用：SoftReferenceNormal$SoftObject@5c647e05
+第一次 GC 后，软引用：SoftReferenceNormal$SoftObject@5c647e05
+再次分配120M 强引用对象后，软引用：null</code></pre>
+<p>首先通过-Xmx将堆最大内存设置为200M。从日志中可以看出，当第一次GC时，内存中还有剩余可用内存，所以软引用并不会被GC回收。但是当我们再次创建一个120M的强引用时，JVM可用内存已经不够，所以会尝试将软引用给回收掉。</p>
+<p><strong>软引用隐藏问题</strong></p>
+<p>需要注意的是，被软引用对象关联的对象会自动被垃圾回收器回收，但是软引用对象本身也是一个对象，这些创建的软引用并不会自动被垃圾回收器回收掉。比如如下代码：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">import</span> java<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>ref<span class="token punctuation">.</span>SoftReference<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>Set<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>HashSet<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">SoftReferenceTest</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">SoftObject</span> <span class="token punctuation">{</span>
+        <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> data <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">1024</span><span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//1KB</span>
+      <span class="token punctuation">}</span>
+
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> CACHE_INITIAL_CAPACITY <span class="token operator">=</span> <span class="token number">100</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//100M</span>
+  <span class="token comment" spellcheck="true">//静态集合保存软引用对象，会导致这些软引用对象本身不能被垃圾回收器回收</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> Set<span class="token operator">&lt;</span>SoftReference<span class="token operator">&lt;</span>SoftObject<span class="token operator">>></span> cache <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">HashSet</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span>CACHE_INITIAL_CAPACITY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> InterruptedException <span class="token punctuation">{</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> CACHE_INITIAL_CAPACITY <span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        SoftObject obj <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SoftObject</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        cache<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">SoftReference</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>i <span class="token operator">%</span> <span class="token number">10000</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+             System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"size of cache："</span><span class="token operator">+</span>cache<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"The End!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>执行上述代码，打印日志如下：</p>
+<pre class=" language-verilog"><code class="language-verilog"><span class="token property">$java</span> <span class="token operator">-</span>Xms4M <span class="token operator">-</span>Xmx4m <span class="token operator">-</span>Xmn2M SoftReferenceTest
+size of cache：<span class="token number">1</span>
+size of cache：<span class="token number">10001</span>
+size of cache：<span class="token number">20001</span>
+size of cache：<span class="token number">30001</span>
+Exception in thread <span class="token string">"main"</span> java<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>OutOfMemoryError<span class="token punctuation">:</span> GC overhead limit exceeded
+    at SoftReferenceTest$SoftObject<span class="token punctuation">.</span><span class="token operator">&lt;</span>init<span class="token operator">></span><span class="token punctuation">(</span>SoftReferenceTest<span class="token punctuation">.</span>java<span class="token punctuation">:</span><span class="token number">7</span><span class="token punctuation">)</span>
+    at SoftReferenceTest<span class="token punctuation">.</span><span class="token function">main</span><span class="token punctuation">(</span>SoftReferenceTest<span class="token punctuation">.</span>java<span class="token punctuation">:</span><span class="token number">16</span><span class="token punctuation">)</span>
+</code></pre>
+<p>限制堆内存大小为4M，最终程序崩溃，但是异常的原因并不是普通的堆内存溢出，而是”GC overhead”。之所以会抛出这个错误，是由于虚拟机一直在不断回收软引用，回收进行的速度过快，占用的cpu过大(超过98%)，并且每次回收掉的内存过小(小于2%)，导致最终抛出了这个错误。</p>
+<p>这里需要做优化，合适的处理方式是注册一个引用队列，每次循环之后将引用队列中出现的软引用对象从cache中移除。如下所示：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">import</span> java<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>ref<span class="token punctuation">.</span>SoftReference<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>ref<span class="token punctuation">.</span>ReferenceQueue<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>ref<span class="token punctuation">.</span>Reference<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>Set<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>HashSet<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">SoftReferenceTest</span> <span class="token punctuation">{</span>
+    <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">SoftObject</span> <span class="token punctuation">{</span>
+        <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token punctuation">]</span> data <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">byte</span><span class="token punctuation">[</span><span class="token number">1024</span><span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//1KB</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">int</span> removedSoftRefs <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+      <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> CACHE_INITIAL_CAPACITY <span class="token operator">=</span> <span class="token number">100</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//100M</span>
+      <span class="token comment" spellcheck="true">//静态集合保存软引用对象，会导致这些软引用对象本身不能被垃圾回收器回收</span>
+      <span class="token keyword">public</span> <span class="token keyword">static</span> Set<span class="token operator">&lt;</span>SoftReference<span class="token operator">&lt;</span>SoftObject<span class="token operator">>></span> cache <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">HashSet</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span>CACHE_INITIAL_CAPACITY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">public</span> <span class="token keyword">static</span> ReferenceQueue<span class="token operator">&lt;</span>SoftObject<span class="token operator">></span> referenceQueue <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ReferenceQueue</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> InterruptedException <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> CACHE_INITIAL_CAPACITY <span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            SoftObject obj <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SoftObject</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            cache<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">SoftReference</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span>obj<span class="token punctuation">,</span>referenceQueue<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token function">clearUselessReference</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span><span class="token punctuation">(</span>i <span class="token operator">%</span> <span class="token number">10000</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+                 System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"size of cache："</span><span class="token operator">+</span>cache<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"The End!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">clearUselessReference</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        Reference<span class="token operator">&lt;</span><span class="token operator">?</span> <span class="token keyword">extends</span> <span class="token class-name">SoftObject</span><span class="token operator">></span> ref <span class="token operator">=</span> referenceQueue<span class="token punctuation">.</span><span class="token function">poll</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span>ref <span class="token operator">!=</span> null<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">if</span><span class="token punctuation">(</span>cache<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span>ref<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+                removedSoftRefs<span class="token operator">++</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            ref <span class="token operator">=</span> referenceQueue<span class="token punctuation">.</span><span class="token function">poll</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>再次运行修改后的代码，结果如下：</p>
+<pre class=" language-shell"><code class="language-shell">$java -Xms4M -Xmx4m -Xmn2M SoftReferenceTest
+size of cache：1
+size of cache：1700
+size of cache：1310
+size of cache：920
+size of cache：530
+size of cache：2218
+size of cache：1828
+size of cache：1310
+size of cache：708
+size of cache：280
+size of cache：1940
+The End! removes soft Reference 100657
+</code></pre>
+<p>可以看出优化后，程序可以正常执行完。并且在执行过程中会动态的将集合中的软引用删除。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>虚拟机垃圾回收机制很多时候都是影响系统性能、并发能力的主要因素之一。尤其是对于从事 Android 开发的工程师来说，有时候垃圾回收会很大程度上影响 UI 线程，并造成界面卡顿现象。因此理解垃圾回收机制并学会分析 GC Log 也是一项必不可少的技能。</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20210328/68b72d473df5/">https://blog.onestravel.cn/20210328/68b72d473df5/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20210528/618470f841d8/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">【笔记三】字节码层面分析 class 文件结构 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20210128/3659e5f3ab6f/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">【笔记一】Java程序运行时，内存是如何分配的 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91GC-%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6%E5%92%8C%E5%88%86%E4%BB%A3%E5%9B%9E%E6%94%B6%E7%AD%96%E7%95%A5"><span class="toc-text">【笔记二】GC 回收机制和分代回收策略</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E5%9E%83%E5%9C%BE"><span class="toc-text">1. 什么是垃圾</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%8F%AF%E8%BE%BE%E6%80%A7%E5%88%86%E6%9E%90"><span class="toc-text">1.1 可达性分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GC-Root"><span class="toc-text">GC Root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%9B%9E%E6%94%B6"><span class="toc-text">2. 什么时候回收</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E4%BB%A3%E7%A0%81%E9%AA%8C%E8%AF%81-GC-Root-%E7%9A%84%E5%87%A0%E7%A7%8D%E6%83%85%E5%86%B5"><span class="toc-text">3. 代码验证 GC Root 的几种情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%AA%8C%E8%AF%81%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88%EF%BC%88%E6%A0%88%E5%B8%A7%E4%B8%AD%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%EF%BC%89%E4%B8%AD%E5%BC%95%E7%94%A8%E5%AF%B9%E8%B1%A1%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.1 验证虚拟机栈（栈帧中局部变量）中引用对象作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E9%AA%8C%E8%AF%81%E6%96%B9%E6%B3%95%E5%8C%BA%E4%B8%AD%E7%9A%84%E9%9D%99%E6%80%81%E5%8F%98%E9%87%8F%E5%BC%95%E7%94%A8%E7%9A%84%E5%AF%B9%E8%B1%A1%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.2 验证方法区中的静态变量引用的对象作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E9%AA%8C%E8%AF%81%E6%B4%BB%E8%B7%83%E7%BA%BF%E7%A8%8B%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.3 验证活跃线程作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E6%B5%8B%E8%AF%95%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E6%98%AF%E5%90%A6%E5%8F%AF%E4%BB%A5%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.4 测试成员变量是否可以作为 GC Root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6"><span class="toc-text">4. 如何进行垃圾回收</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%A0%87%E8%AE%B0%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95%EF%BC%88Mark-and-Sweep-GC%EF%BC%89"><span class="toc-text">4.1 标记清除算法（Mark and Sweep GC）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E5%A4%8D%E5%88%B6%E7%AE%97%E6%B3%95%EF%BC%88Copying%EF%BC%89"><span class="toc-text">4.2 复制算法（Copying）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E6%A0%87%E8%AE%B0-%E5%8E%8B%E7%BC%A9%E7%AE%97%E6%B3%95%EF%BC%88Mark-Compact%EF%BC%89"><span class="toc-text">4.3 标记-压缩算法（Mark-Compact）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-JVM-%E5%88%86%E4%BB%A3%E5%9B%9E%E6%94%B6%E7%AD%96%E7%95%A5"><span class="toc-text">4.4 JVM 分代回收策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-GC-log-%E5%88%86%E6%9E%90"><span class="toc-text">5. GC log 分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E5%BC%95%E7%94%A8"><span class="toc-text">6. 引用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91GC-%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6%E5%92%8C%E5%88%86%E4%BB%A3%E5%9B%9E%E6%94%B6%E7%AD%96%E7%95%A5"><span class="toc-text">【笔记二】GC 回收机制和分代回收策略</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E5%9E%83%E5%9C%BE"><span class="toc-text">1. 什么是垃圾</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%8F%AF%E8%BE%BE%E6%80%A7%E5%88%86%E6%9E%90"><span class="toc-text">1.1 可达性分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GC-Root"><span class="toc-text">GC Root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%9B%9E%E6%94%B6"><span class="toc-text">2. 什么时候回收</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E4%BB%A3%E7%A0%81%E9%AA%8C%E8%AF%81-GC-Root-%E7%9A%84%E5%87%A0%E7%A7%8D%E6%83%85%E5%86%B5"><span class="toc-text">3. 代码验证 GC Root 的几种情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%AA%8C%E8%AF%81%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88%EF%BC%88%E6%A0%88%E5%B8%A7%E4%B8%AD%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%EF%BC%89%E4%B8%AD%E5%BC%95%E7%94%A8%E5%AF%B9%E8%B1%A1%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.1 验证虚拟机栈（栈帧中局部变量）中引用对象作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E9%AA%8C%E8%AF%81%E6%96%B9%E6%B3%95%E5%8C%BA%E4%B8%AD%E7%9A%84%E9%9D%99%E6%80%81%E5%8F%98%E9%87%8F%E5%BC%95%E7%94%A8%E7%9A%84%E5%AF%B9%E8%B1%A1%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.2 验证方法区中的静态变量引用的对象作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E9%AA%8C%E8%AF%81%E6%B4%BB%E8%B7%83%E7%BA%BF%E7%A8%8B%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.3 验证活跃线程作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E6%B5%8B%E8%AF%95%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E6%98%AF%E5%90%A6%E5%8F%AF%E4%BB%A5%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.4 测试成员变量是否可以作为 GC Root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6"><span class="toc-text">4. 如何进行垃圾回收</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%A0%87%E8%AE%B0%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95%EF%BC%88Mark-and-Sweep-GC%EF%BC%89"><span class="toc-text">4.1 标记清除算法（Mark and Sweep GC）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E5%A4%8D%E5%88%B6%E7%AE%97%E6%B3%95%EF%BC%88Copying%EF%BC%89"><span class="toc-text">4.2 复制算法（Copying）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E6%A0%87%E8%AE%B0-%E5%8E%8B%E7%BC%A9%E7%AE%97%E6%B3%95%EF%BC%88Mark-Compact%EF%BC%89"><span class="toc-text">4.3 标记-压缩算法（Mark-Compact）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-JVM-%E5%88%86%E4%BB%A3%E5%9B%9E%E6%94%B6%E7%AD%96%E7%95%A5"><span class="toc-text">4.4 JVM 分代回收策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-GC-log-%E5%88%86%E6%9E%90"><span class="toc-text">5. GC log 分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E5%BC%95%E7%94%A8"><span class="toc-text">6. 引用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91GC-%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6%E5%92%8C%E5%88%86%E4%BB%A3%E5%9B%9E%E6%94%B6%E7%AD%96%E7%95%A5"><span class="toc-text">【笔记二】GC 回收机制和分代回收策略</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E5%9E%83%E5%9C%BE"><span class="toc-text">1. 什么是垃圾</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%8F%AF%E8%BE%BE%E6%80%A7%E5%88%86%E6%9E%90"><span class="toc-text">1.1 可达性分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GC-Root"><span class="toc-text">GC Root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%9B%9E%E6%94%B6"><span class="toc-text">2. 什么时候回收</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E4%BB%A3%E7%A0%81%E9%AA%8C%E8%AF%81-GC-Root-%E7%9A%84%E5%87%A0%E7%A7%8D%E6%83%85%E5%86%B5"><span class="toc-text">3. 代码验证 GC Root 的几种情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%AA%8C%E8%AF%81%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88%EF%BC%88%E6%A0%88%E5%B8%A7%E4%B8%AD%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%EF%BC%89%E4%B8%AD%E5%BC%95%E7%94%A8%E5%AF%B9%E8%B1%A1%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.1 验证虚拟机栈（栈帧中局部变量）中引用对象作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E9%AA%8C%E8%AF%81%E6%96%B9%E6%B3%95%E5%8C%BA%E4%B8%AD%E7%9A%84%E9%9D%99%E6%80%81%E5%8F%98%E9%87%8F%E5%BC%95%E7%94%A8%E7%9A%84%E5%AF%B9%E8%B1%A1%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.2 验证方法区中的静态变量引用的对象作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E9%AA%8C%E8%AF%81%E6%B4%BB%E8%B7%83%E7%BA%BF%E7%A8%8B%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.3 验证活跃线程作为 GC Root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E6%B5%8B%E8%AF%95%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E6%98%AF%E5%90%A6%E5%8F%AF%E4%BB%A5%E4%BD%9C%E4%B8%BA-GC-Root"><span class="toc-text">3.4 测试成员变量是否可以作为 GC Root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6"><span class="toc-text">4. 如何进行垃圾回收</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%A0%87%E8%AE%B0%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95%EF%BC%88Mark-and-Sweep-GC%EF%BC%89"><span class="toc-text">4.1 标记清除算法（Mark and Sweep GC）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E5%A4%8D%E5%88%B6%E7%AE%97%E6%B3%95%EF%BC%88Copying%EF%BC%89"><span class="toc-text">4.2 复制算法（Copying）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E6%A0%87%E8%AE%B0-%E5%8E%8B%E7%BC%A9%E7%AE%97%E6%B3%95%EF%BC%88Mark-Compact%EF%BC%89"><span class="toc-text">4.3 标记-压缩算法（Mark-Compact）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-JVM-%E5%88%86%E4%BB%A3%E5%9B%9E%E6%94%B6%E7%AD%96%E7%95%A5"><span class="toc-text">4.4 JVM 分代回收策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-GC-log-%E5%88%86%E6%9E%90"><span class="toc-text">5. GC log 分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E5%BC%95%E7%94%A8"><span class="toc-text">6. 引用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

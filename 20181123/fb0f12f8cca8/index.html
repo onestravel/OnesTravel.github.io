@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>（六）C++中的类型转换与STL标准模板库</title>
+  
+  
+  <meta property="og:title" content="（六）C++中的类型转换与STL标准模板库">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20181123/fb0f12f8cca8/index.html">
+  
+  
+  <meta property="og:img" content="/images/20181123/c++STL.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2018-11-23">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="CPlusPlus">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/20181123/c++STL.jpg" data-src="/images/20181123/c++STL.jpg"
+    srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      （六）C++中的类型转换与STL标准模板库
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2018-11-23T03:35:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2018-11-23</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/CPlusPlus/" class="post-meta-link">CPlusPlus</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>5k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/CPlusPlus/" class="post-meta-link">CPlusPlus</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="C-中的类型转换与STL标准模板库"><a href="#C-中的类型转换与STL标准模板库" class="headerlink" title="C++中的类型转换与STL标准模板库"></a>C++中的类型转换与STL标准模板库</h1><h2 id="一、C-类型转换"><a href="#一、C-类型转换" class="headerlink" title="一、C++类型转换"></a>一、C++类型转换</h2><p><strong>在C++中类型转换包含 static_cast、const_cast、dynamic_cast、reinterpret_cast 四种类型转换。使用原始类型转换，所有转换都是一种写法，可读性不高，有可能有潜在的风险</strong></p>
+<h3 id="1、static-cast"><a href="#1、static-cast" class="headerlink" title="1、static_cast"></a>1、static_cast</h3><p><strong>该类型转换函数用于不同类型的属性之间的转换</strong></p>
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+
+void* func()&#123;
+    int i = 0;
+    return &amp;i;
+&#125;
+void main()&#123;
+    //自动类型转换
+    //int i = 0;
+    //double d = i;
+    //或
+    //double d = 9.5;
+    //int i = d;
+
+    // int i = 8;
+    // double d = 9.5;
+    // i = static_cast&lt;int&gt;(d);
+    // cout &lt;&lt; &quot;i = &quot; &lt;&lt; i &lt;&lt; endl;
+
+    int i = 9;
+    int *i_p = &amp;i;
+&#125;</code></pre><p>void* 转 char*</p>
+<pre><code>void* func(int type)&#123;
+    switch(type)&#123;
+        case 1:
+            int i = 11;
+            return &amp;i;
+        case 2:
+            int a = &#39;X&#39;;
+            return &amp;a;
+        default:
+            return NULL;
+    &#125;
+&#125;
+void main()&#123;
+   //void* 转 char*
+   //char* c_p = (char*)func(2);
+   char* c_p = static_cast&lt;char*&gt;(func(2));
+
+   //C++
+
+   func
+   //C
+&#125;</code></pre><h3 id="2、const-cast"><a href="#2、const-cast" class="headerlink" title="2、const_cast"></a>2、const_cast</h3><p><strong>该类型转换函数用于去常量，一般使用在常量属性转为非常量属性时使用</strong></p>
+<pre><code>void func(char c[])&#123;
+    //可以修改
+    c[0] = &#39;H&#39;;
+    c[1] = &#39;a&#39;;
+&#125;
+
+void func2(const char c[])&#123;
+    //c[0] = &#39;H&#39;; //不能修改
+    //c[1] = &#39;a&#39;;//不能修改
+    //通过指针间接赋值
+    //其他人并不知道，这次转型是为了去常量
+    //char* c_p = (char*)c;
+    //c_p[1] = &#39;a&#39;;
+    //cout &lt;&lt; c &lt;&lt; endl;
+
+    //C++ 去常量，可读性高
+    char* c_p = const_cast&lt;char*&gt;(c);
+    c_p[1] = &#39;y&#39;;
+    cout &lt;&lt; c &lt;&lt; endl;
+&#125;
+
+void main()&#123;
+    char c[] = &quot;hello&quot;;
+    func2(c);
+
+    getchar();
+&#125;</code></pre><h3 id="3、dynamic-cast"><a href="#3、dynamic-cast" class="headerlink" title="3、dynamic_cast"></a>3、dynamic_cast</h3><p><strong>该类型转换用于父类对象转换为子类时使用，处理父类转为子类时的不确定性（类型不匹配时转型失败，返回NULL）</strong></p>
+<pre><code>class Person&#123;
+public:
+    virtual void print()&#123;
+        cout &lt;&lt; &quot;人&quot; &lt;&lt;endl;
+    &#125;    
+&#125;;
+
+class Man : public Person&#123;
+public:
+    void print()&#123;
+        cout &lt;&lt; &quot;男人&quot; &lt;&lt;endl;
+    &#125;
+    void smoking()&#123;
+        cout &lt;&lt; &quot;吸烟&quot; &lt;&lt;endl;
+    &#125;
+&#125;;
+
+class Woman : public Person&#123;
+public:
+    void print()&#123;
+        cout &lt;&lt; &quot;女人&quot; &lt;&lt;endl;
+    &#125;
+    void makeup()&#123;
+        cout &lt;&lt; &quot;化妆&quot; &lt;&lt;endl;
+    &#125;
+&#125;;
+
+void func(Person* obj)&#123;
+    obj-&gt;print();
+    //调用子类的特有函数，需要转为实际类型
+    //当传入Woman对象时，转型为Man，转型失败，但是编译器并为察觉
+    //Man* man = (Man*)obj;
+    //man-&gt;print();
+
+    //转型失败，返回NULL  
+   //Man* man = dynamic_cast&lt;Man*&gt;(obj);
+    //man-&gt;print();
+    Man* man = dynamic_cast&lt;Man*&gt;(obj);
+    if(man!=NULL)&#123;
+        man-&gt;smoking();
+    &#125;
+
+    Woman* woman = dynamic_cast&lt;Woman*&gt;(obj);
+    if(woman!=NULL)&#123;
+        woman-&gt;makeup();
+    &#125;
+
+
+&#125;
+void main()&#123;
+    Woman w1;
+    //父类类型的指针指向子类对象
+    Person* p = &amp;w1;
+    func(p);
+
+    getchar();
+&#125;</code></pre><h3 id="4、reinterpret-cast"><a href="#4、reinterpret-cast" class="headerlink" title="4、reinterpret_cast"></a>4、reinterpret_cast</h3><p><strong>该类型转换用于函数指针之间的转型，在使用函数指针转型时使用</strong></p>
+<pre><code>void func1()&#123;
+
+&#125;
+
+char* func2()&#123;
+    return &quot;abc&quot;;
+&#125;
+
+typedef void(*f_p)();
+
+void main()&#123;
+    f_p f_array[6];
+    f_array[0] = func1;
+    //C 方式
+    f_array[1] = (f_p)func2;
+    f_array[1] = reinterpret_cast&lt;f_p&gt;func2;
+
+
+    getchar();
+&#125;</code></pre><h2 id="二、IO-流"><a href="#二、IO-流" class="headerlink" title="二、IO 流"></a>二、IO 流</h2><p><strong>在 C++ 中，通过<fstream> 头文件中的 ifstream 读取文件，ofstream 写入文件，完成 IO 流操作</strong></p>
+<h3 id="1、文本文件操作"><a href="#1、文本文件操作" class="headerlink" title="1、文本文件操作"></a>1、文本文件操作</h3><p><strong>对于文本文件，可进行使用 ifstream 中的 get(ch) 读取一个字符；使用 fout &lt;&lt; 写入一个字符串</strong></p>
+<pre><code>
+#include &lt;fstream&gt;
+void main()&#123;
+    char fname[] = &quot;D://dest.text&quot;;
+    //输出流
+    ofstream fout(fname);
+    //创建失败
+    if(fout.bad())&#123;
+        return -1;
+    &#125;
+    fout &lt;&lt; &quot;Jack&quot; &lt;&lt; endl;
+    fout &lt;&lt; &quot;Rose&quot; &lt;&lt; endl;
+    fout.close();
+
+    //读取
+    ifstream fin(fname);
+    if(fin.bad())&#123;
+        return -2;
+    &#125;
+    char ch;
+    while(fin.get(ch))&#123;
+        cout &lt;&lt; ch;
+    &#125;
+    fin.close();
+&#125;</code></pre><h3 id="2、二进制文件操作"><a href="#2、二进制文件操作" class="headerlink" title="2、二进制文件操作"></a>2、二进制文件操作</h3><p><strong>对于二进制文件，可进行使用 ifstream中的read(buff,1024) 读取二进制文件，通过 ofstream中的write(buff,1024) 写入到对应文件中</strong></p>
+<pre><code>
+#include &lt;fstream&gt;
+void main()&#123;
+    char src[] = &quot;D://xueshan.jpg&quot;;
+    char src_copy[] = &quot;D://xueshan_copy.jpg&quot;;
+     //读取
+    ifstream fin(src,ios::binary);
+
+    //输出流
+    ofstream fout(src_copy,,ios::binary);
+    //创建失败
+    if(fin.bad()||fout.bad())&#123;
+        return -1;
+    &#125;
+    while(!fin.eof())&#123;
+        char buff[1024] = &#123;0&#125;;
+        fin.read(buff,1024);
+        //写入
+        fout.write(buff, 1024);
+    &#125;
+    //关闭
+    fin.close();
+    fout.close();
+&#125;</code></pre><h3 id="3、对象持久化"><a href="#3、对象持久化" class="headerlink" title="3、对象持久化"></a>3、对象持久化</h3><pre><code>class Person&#123;
+private:
+    char* name;
+    int age;
+public:
+    Person()&#123;&#125;
+    Person(char* name,int age)&#123;
+        this-&gt;name = name;
+        this-&gt;age = age;
+    &#125;
+
+    char* getName()&#123;
+        return this-&gt;name;
+    &#125;
+
+    int getAge()&#123;
+        return this-&gt;age;
+    &#125;
+
+    void print()&#123;
+        cout &lt;&lt; this-&gt;name &lt;&lt; &quot;,&quot; &lt;&lt; this-&gt;age &lt;&lt; endl;
+    &#125;
+&#125;;
+
+void main()&#123;
+    Person p1(const_cast&lt;char*&gt;(&quot;Jack&quot;),25);
+    Person p2(const_cast&lt;char*&gt;(&quot;Rose&quot;),22);
+    //输出流
+    ofstream fout(&quot;D://c_obj.data&quot;,ios::binary);
+    //指针能够读取到正确的数据，读取内存区的长度
+    fout.write((char*)(&amp;p1), sizeof(Person));
+    fout.write((char*)(&amp;p2), sizeof(Person));
+    fout.close();
+
+    //输入流
+    ifstream fin(&quot;D://c_obj.data&quot;,ios::binary);
+    Person tmp;
+    fin.read((char*)(&amp;tmp), sizeof(Person));
+    tmp.print();
+
+    fin.read((char*)(&amp;tmp), sizeof(Person));
+    tmp.print();
+&#125;</code></pre><h2 id="三、STL-standard-template-library-标准模板库"><a href="#三、STL-standard-template-library-标准模板库" class="headerlink" title="三、STL(standard template library)标准模板库"></a>三、STL(standard template library)标准模板库</h2><p><strong>在 C++ 中包含很多标准模板库，可以让代码更加简洁</strong></p>
+<h3 id="1、string-模板库"><a href="#1、string-模板库" class="headerlink" title="1、string 模板库"></a>1、string 模板库</h3><p><strong>使用 string 模板库，在边写代码时更改简洁易用，但是在JNI中 string 需要转为 char* ,，在转为jstring返回</strong></p>
+<h4 id="1-1-string-初始化"><a href="#1-1-string-初始化" class="headerlink" title="1.1 string 初始化"></a>1.1 string 初始化</h4><pre><code>#include &lt;string&gt;
+void main()&#123;
+    string s1 = &quot;Hello &quot;;
+    string s2(&quot; every day&quot;);
+    string s3 = s1 + s2;
+    cout &lt;&lt; s3 &lt;&lt; endl;
+
+    //string 转 c 字符串,在JNI中要转为C的str 然后再转为jstring返回
+    const char* c_str = s1.c_str();
+    cout &lt;&lt; c_str &lt;&lt; endl;
+&#125;</code></pre><h4 id="1-2-string-遍历"><a href="#1-2-string-遍历" class="headerlink" title="1.2 string 遍历"></a>1.2 string 遍历</h4><pre><code>#include &lt;string&gt;
+//string遍历
+void main()
+&#123;
+    string s1 = &quot;craig david&quot;;
+    //             ^
+    //1 数组方式
+    for (int i = 0; i &lt; s1.length(); i++)
+    &#123;
+        cout &lt;&lt; s1[i] &lt;&lt; endl;
+    &#125;
+    //2 迭代器指针
+    for (string::iterator it = s1.begin(); it != s1.end(); it++)
+    &#123;
+        cout &lt;&lt; *it &lt;&lt; &quot; &quot;;
+    &#125;
+    cout &lt;&lt; endl;
+    //3 at函数(charAt)
+    // 可能会抛出异常
+    try
+    &#123;
+        for (int i = 0; i &lt; s1.length() + 3; i++)
+        &#123;
+            cout &lt;&lt; s1.at(i) &lt;&lt; &quot; &quot;;
+        &#125;
+    &#125;
+    catch (...)
+    &#123;
+        cout &lt;&lt; &quot;异常&quot; &lt;&lt; endl;
+    &#125;
+
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="1-3-string-字符串查找替换"><a href="#1-3-string-字符串查找替换" class="headerlink" title="1.3 string 字符串查找替换"></a>1.3 string 字符串查找替换</h4><pre><code>#include &lt;string&gt;
+#include &lt;iostream&gt;
+
+using namespace std;
+//字符串查找替换
+void main()
+&#123;
+    string s1 = &quot;apple google apple iphone&quot;;
+    //从0开始查找&quot;google&quot;的位置
+    int idx = s1.find(&quot;google&quot;, 0);
+    cout &lt;&lt; idx &lt;&lt; endl;
+
+    //统计apple出现的次数
+    int idx_app = s1.find(&quot;apple&quot;,0);
+    //npos大于任何有效下标的值
+    int num = 0;
+    while (idx_app != string::npos)
+    &#123;
+        num++;
+        cout &lt;&lt; &quot;找到的索引:&quot; &lt;&lt; idx_app &lt;&lt; endl;
+        idx_app+=5;
+        idx_app = s1.find(&quot;apple&quot;, idx_app);
+    &#125;
+
+    cout &lt;&lt; num &lt;&lt; endl;
+    system(&quot;pause&quot;);
+&#125;
+</code></pre><h4 id="1-4-string-删除（截取）和插入"><a href="#1-4-string-删除（截取）和插入" class="headerlink" title="1.4 string 删除（截取）和插入"></a>1.4 string 删除（截取）和插入</h4><pre><code>#include &lt;string&gt;
+#include &lt;iostream&gt;
+
+using namespace std;
+//删除（截取）和插入
+void main()
+&#123;
+    string s1 = &quot;apple google apple iphone&quot;;
+    //删除a，找到a所在的指针
+    string::iterator it = find(s1.begin(),s1.end(),&#39;g&#39;);
+    //只能删除一个字符
+    s1.erase(it);
+
+    //开头末尾插入字符串
+    s1.insert(0, &quot;macos&quot;);
+    s1.insert(s1.length(), &quot; facebook&quot;);
+
+    cout &lt;&lt; s1 &lt;&lt; endl;
+    system(&quot;pause&quot;);
+&#125;
+</code></pre><h4 id="1-5-string-大小写转换"><a href="#1-5-string-大小写转换" class="headerlink" title="1.5 string 大小写转换"></a>1.5 string 大小写转换</h4><pre><code>#include &lt;string&gt;
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt; //算法
+
+using namespace std;
+//java StringBuffer才可变
+//String 不可变
+//大小写转换
+void main()
+&#123;
+    string s1 = &quot;JASON&quot;;
+    //原始字符串的起始地址，原始字符串的结束地址, 目标字符串的起始地址, 函数名称
+    transform(s1.begin(), s1.end()-1,s1.begin(), tolower);
+    cout &lt;&lt; s1 &lt;&lt; endl;
+
+
+    transform(s1.begin(), s1.end() - 1, s1.begin(), toupper);
+    cout &lt;&lt; s1 &lt;&lt; endl;
+
+    system(&quot;pause&quot;);
+&#125;
+</code></pre><h3 id="2、容器-vector-模板库"><a href="#2、容器-vector-模板库" class="headerlink" title="2、容器 vector 模板库"></a>2、容器 vector 模板库</h3><p><strong>使用 vector 模板库，不需要使用动态内存分配，就可以使用动态数组</strong></p>
+<h4 id="2-1-vector-初始化与遍历"><a href="#2-1-vector-初始化与遍历" class="headerlink" title="2.1 vector 初始化与遍历"></a>2.1 vector 初始化与遍历</h4><pre><code>#include &lt;vector&gt;
+
+void printVector(vector&lt;int&gt; &amp;v)
+&#123;
+    //通过数组的方式遍历
+    for (int i = 0; i &lt; v.size(); i++)
+    &#123;
+        cout &lt;&lt; v[i] &lt;&lt; endl;
+    &#125;
+&#125;
+
+
+void main()&#123;
+    //动态数组
+    vector&lt;int&gt; v;
+    v.push_back(12);
+    v.push_back(118);
+    v.push_back(1);
+    v.push_back(52);
+    v.push_back(20);
+    //遍历
+    for(int i = 0; i&lt;v.size(); i++)&#123;
+        cout &lt;&lt; v[i] &lt;&lt; endl;
+    &#125;
+
+    //部分复制
+    vector&lt;int&gt; v3(v1.begin(),v1.begin()+2);
+     for(int i = 0; i&lt;v3.size(); i++)&#123;
+        cout &lt;&lt; v3[i] &lt;&lt; endl;
+    &#125;
+
+&#125;</code></pre><h4 id="2-2-vector-添加和删除"><a href="#2-2-vector-添加和删除" class="headerlink" title="2.2 vector 添加和删除"></a>2.2 vector 添加和删除</h4><pre><code>//添加 删除
+void main()
+&#123;
+    //添加到结尾
+    vector&lt;int&gt; v1;
+    v1.push_back(20);
+    v1.push_back(40);
+    v1.push_back(15);
+    v1.push_back(7);
+
+    //访问头部
+    v1.front() = 11;
+    //访问尾部
+    v1.back() = 90;
+
+    //删除结尾的元素
+    //v1.pop_back();
+    while (v1.size() &gt; 0)
+    &#123;
+        cout &lt;&lt; &quot;末尾的元素：&quot; &lt;&lt; v1.back() &lt;&lt; endl;
+        v1.pop_back();
+    &#125;
+
+    printVector(v1);
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="2-3-vector-数组方式"><a href="#2-3-vector-数组方式" class="headerlink" title="2.3 vector 数组方式"></a>2.3 vector 数组方式</h4><pre><code>//数组的方式
+void main()
+&#123;
+    vector&lt;int&gt; v1;
+    v1.push_back(20);
+    v1.push_back(40);
+    v1.push_back(15);
+    v1.push_back(7);
+
+    v1[2] = v1[2] +10;
+
+    //容器等价于动态数组    
+    vector&lt;int&gt; v2(10);
+    for (int i = 0; i &lt; v2.size(); i++)
+    &#123;
+        v2[i] = i + 1;
+    &#125;
+
+    printVector(v2);
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="2-4-vector-迭代器遍历"><a href="#2-4-vector-迭代器遍历" class="headerlink" title="2.4 vector 迭代器遍历"></a>2.4 vector 迭代器遍历</h4><pre><code>//迭代器遍历
+//迭代器的种类（正向，反向迭代器）
+void main()
+&#123;
+    vector&lt;int&gt; v1;
+    v1.push_back(20);
+    v1.push_back(40);
+    v1.push_back(15);
+    v1.push_back(7);
+    //正向
+    for (vector&lt;int&gt;::iterator it = v1.begin(); it &lt; v1.end(); it++)
+    &#123;
+        cout &lt;&lt; *it &lt;&lt; endl;
+    &#125;
+    cout &lt;&lt; &quot;-----------------&quot; &lt;&lt; endl;
+    //反向迭代
+    for (vector&lt;int&gt;::reverse_iterator it = v1.rbegin(); it &lt; v1.rend(); it++)
+    &#123;
+        cout &lt;&lt; *it &lt;&lt; endl;
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="2-5-vector-插入和删除"><a href="#2-5-vector-插入和删除" class="headerlink" title="2.5 vector 插入和删除"></a>2.5 vector 插入和删除</h4><pre><code>void main()
+&#123;
+    vector&lt;int&gt; v1(10);
+    for (int i = 0; i &lt; v1.size(); i++)
+    &#123;
+        v1[i] = i + 1;
+    &#125;
+
+    //删除指定位置
+    vector&lt;int&gt;::iterator it = v1.begin();
+    it += 3;
+    v1.erase(it);
+
+    //distance(v1.begin(), it);
+
+    //删除区间
+    v1.erase(v1.begin(), v1.begin() + 3);
+
+    for (vector&lt;int&gt;::iterator it = v1.begin(); it &lt; v1.end(); it++)
+    &#123;
+        if (*it == 5)
+        &#123;        
+            printf(&quot;%x\n&quot;, it);
+            vector&lt;int&gt;::iterator tmp = v1.erase(it); //注意以后开发中编译器版本问题
+            printf(&quot;%x,%x\n&quot;,it,tmp);
+        &#125;
+    &#125;
+
+    //插入
+    v1.insert(v1.begin() + 2, 100);
+    v1.insert(v1.end() - 1, 200);
+
+    printVector(v1);
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h3 id="3、队列-deque-模板库"><a href="#3、队列-deque-模板库" class="headerlink" title="3、队列 deque 模板库"></a>3、队列 deque 模板库</h3><h4 id="3-1-双向队列"><a href="#3-1-双向队列" class="headerlink" title="3.1 双向队列"></a>3.1 双向队列</h4><pre><code>
+//双向队列
+#include &lt;deque&gt;
+void printDeque(deque&lt;int&gt;&amp; q)
+&#123;
+    for (int i = 0; i &lt; q.size(); i++)
+    &#123;
+        cout &lt;&lt; q[i] &lt;&lt; endl;
+    &#125;
+&#125;
+
+
+void main()
+&#123;
+    deque&lt;int&gt; d1;
+    //添加到尾部
+    d1.push_back(2);
+    d1.push_back(10);
+    //添加到头部
+    d1.push_front(-90);
+    d1.push_front(-30);
+
+    //printDeque(d1);
+
+    //cout &lt;&lt; d1.front() &lt;&lt; endl;
+    //cout &lt;&lt; d1.back() &lt;&lt; endl;
+
+    //两个方向弹出
+    //d1.pop_back();
+    //d1.pop_front();
+
+    printDeque(d1);
+
+    //查找第一个-90元素索引位置，无需遍历
+    deque&lt;int&gt;::iterator it = find(d1.begin(), d1.end(), -90);
+    if (it != d1.end())
+    &#123;
+        int idx = distance(d1.begin(), it);
+        cout &lt;&lt; &quot;索引位置为：&quot; &lt;&lt; idx &lt;&lt; endl;
+    &#125;
+
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="3-2-没有迭代器的队列"><a href="#3-2-没有迭代器的队列" class="headerlink" title="3.2 没有迭代器的队列"></a>3.2 没有迭代器的队列</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;queue&gt;
+using namespace std;
+void main()
+&#123;
+    queue&lt;int&gt; q;
+    q.push(78);
+    q.push(18);
+    q.push(20);
+    q.push(33);
+
+    //q.front();
+    //q.back();
+    while (!q.empty())
+    &#123;
+        int tmp = q.front();
+        cout &lt;&lt; tmp &lt;&lt; endl;
+        q.pop();
+    &#125;    
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="3-3-优先级队列"><a href="#3-3-优先级队列" class="headerlink" title="3.3 优先级队列"></a>3.3 优先级队列</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;queue&gt;
+using namespace std;
+void main()
+&#123;
+    //默认 最大值优先级
+    priority_queue&lt;int&gt; pq1;
+    pq1.push(12);
+    pq1.push(3);
+    pq1.push(40);
+    pq1.push(15);
+
+    while (!pq1.empty())
+    &#123;
+        int tmp = pq1.top();
+        cout &lt;&lt; tmp &lt;&lt; endl;
+        pq1.pop();
+    &#125;
+
+    cout &lt;&lt; &quot;----------&quot; &lt;&lt; endl;
+    //最小值优先级队列
+    priority_queue&lt;int, vector&lt;int&gt;, greater&lt;int&gt;&gt; pq2;
+    pq2.push(12);
+    pq2.push(3);
+    pq2.push(40);
+    pq2.push(15);
+
+    while (!pq2.empty())
+    &#123;
+        int tmp = pq2.top();
+        cout &lt;&lt; tmp &lt;&lt; endl;
+        pq2.pop();
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h3 id="4、stack-栈-模板"><a href="#4、stack-栈-模板" class="headerlink" title="4、stack 栈 模板"></a>4、stack 栈 模板</h3><h4 id="4-1-stack-栈的初始化"><a href="#4-1-stack-栈的初始化" class="headerlink" title="4.1 stack 栈的初始化"></a>4.1 stack 栈的初始化</h4><pre><code>
+#include &lt;iostream&gt;
+#include &lt;stack&gt;
+
+using namespace std;
+
+void main()
+&#123;
+    stack&lt;int&gt; s;
+    for (int i = 0; i &lt; 10; i++)
+    &#123;
+        s.push(i + 1);
+    &#125;
+
+    while (!s.empty())
+    &#123;
+        int tmp = s.top();
+        cout &lt;&lt; tmp &lt;&lt; endl;
+        s.pop();
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h3 id="5、list-模板"><a href="#5、list-模板" class="headerlink" title="5、list 模板"></a>5、list 模板</h3><h4 id="5-1-list-初始化"><a href="#5-1-list-初始化" class="headerlink" title="5.1 list 初始化"></a>5.1 list 初始化</h4><pre><code>
+#include &lt;iostream&gt;
+#include &lt;list&gt;
+
+using namespace std;
+
+void printList(list&lt;int&gt;&amp; lst)
+&#123;
+    //迭代器
+    //没有重载“&lt;”运算符
+    for (list&lt;int&gt;::iterator it = lst.begin(); it != lst.end(); it++)
+    &#123;
+        cout &lt;&lt; *it &lt;&lt; endl;
+    &#125;
+&#125;
+//基本操作
+/*
+void main()
+&#123;
+    list&lt;int&gt; lst;
+    for (int i = 0; i &lt; 10; i++)
+    &#123;
+        //尾部插入元素
+        lst.push_back(i);
+    &#125;
+
+    //头部插入元素
+    lst.push_front(80);
+    lst.push_front(90);
+
+    list&lt;int&gt;::iterator it = lst.begin();
+    it++;
+    cout &lt;&lt; *it &lt;&lt; endl;
+    //it = it + 3; 注意：不支持随机访问        
+
+    printList(lst);
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="5-2-list-插入"><a href="#5-2-list-插入" class="headerlink" title="5.2 list 插入"></a>5.2 list 插入</h4><pre><code>
+#include &lt;iostream&gt;
+#include &lt;list&gt;
+
+using namespace std;
+
+void main()
+&#123;
+    list&lt;int&gt; lst;
+    for (int i = 0; i &lt; 10; i++)
+    &#123;
+        //尾部插入元素
+        lst.push_back(i);
+    &#125;
+
+    list&lt;int&gt;::iterator it = lst.begin();
+    it++;
+    lst.insert(it, 100);
+
+    printList(lst);
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="5-3-list-初始化"><a href="#5-3-list-初始化" class="headerlink" title="5.3 list 初始化"></a>5.3 list 初始化</h4><pre><code>
+#include &lt;iostream&gt;
+#include &lt;list&gt;
+
+using namespace std;
+
+void main()
+&#123;
+    list&lt;int&gt; lst;
+    for (int i = 0; i &lt; 10; i++)
+    &#123;
+        //尾部插入元素
+        lst.push_back(i);
+    &#125;
+
+    list&lt;int&gt;::iterator it = lst.begin();
+    //删除
+    it++;
+    //删除第二个元素
+    //lst.erase(it);
+
+    //删除区间（已经被删除了元素不能再删除）
+    list&lt;int&gt;::iterator it_begin = lst.begin();
+    list&lt;int&gt;::iterator it_end = lst.begin();
+    it_end++;
+    it_end++;
+    it_end++;
+    lst.erase(it_begin, it_end);
+
+    //直接根据内容删除元素
+    lst.remove(5);
+
+    printList(lst);
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h3 id="6、set-模板"><a href="#6、set-模板" class="headerlink" title="6、set 模板"></a>6、set 模板</h3><h4 id="6-1-set-初始化"><a href="#6-1-set-初始化" class="headerlink" title="6.1 set 初始化"></a>6.1 set 初始化</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;set&gt;
+
+using namespace std;
+
+//set 元素唯一 默认从小到大
+void printSet(set&lt;int&gt; &amp;s)
+&#123;
+    for (set&lt;int&gt;::iterator it = s.begin(); it != s.end(); it++)
+    &#123;
+        cout &lt;&lt; *it &lt;&lt; endl;
+    &#125;
+&#125;
+
+void main()
+&#123;
+    set&lt;int&gt; s;
+    //添加元素
+    for (int i = 0; i &lt; 10; i++)
+    &#123;
+        s.insert(i+1);
+    &#125;
+    s.insert(20);
+    s.insert(15);
+    s.insert(15);
+
+    //删除
+    set&lt;int&gt;::iterator it = s.begin();
+    it++;
+    s.erase(it);    
+
+    printSet(s);
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="6-2-set-元素按照从大到小排列"><a href="#6-2-set-元素按照从大到小排列" class="headerlink" title="6.2 set 元素按照从大到小排列"></a>6.2 set 元素按照从大到小排列</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;set&gt;
+#include &lt;functional&gt;
+using namespace std;
+
+void main()
+&#123;
+    //同Java中：Map&lt;String,List&lt;String&gt;&gt; 
+    set&lt;int,greater&lt;int&gt;&gt; s;
+    s.insert(10);
+    s.insert(5);
+    s.insert(20);
+    s.insert(99);
+
+    for (set&lt;int,greater&lt;int&gt;&gt;::iterator it = s.begin(); it != s.end(); it++)
+    &#123;
+        cout &lt;&lt; *it &lt;&lt; endl;
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="6-3-set-自定义排序规则"><a href="#6-3-set-自定义排序规则" class="headerlink" title="6.3 set 自定义排序规则"></a>6.3 set 自定义排序规则</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;set&gt;
+#include &lt;functional&gt;
+using namespace std;
+
+//元素类型为Teacher对象，按照年龄排序
+
+class Teacher
+&#123;
+public:
+    Teacher(char* name, int age)
+    &#123;
+        this-&gt;name = name;
+        this-&gt;age = age;
+    &#125;
+
+    void print()
+    &#123;
+        cout &lt;&lt; name &lt;&lt; &quot;,&quot; &lt;&lt; age &lt;&lt; endl;
+    &#125;
+
+public:
+    char* name;
+    int age;
+&#125;;
+
+//自定义排序规则
+//仿函数
+struct MyAgeSorter
+&#123;
+    bool operator()(const Teacher &amp;left, const Teacher &amp;right)
+    &#123;
+        return left.age &lt; right.age;
+    &#125;
+&#125;;
+
+void main()
+&#123;
+    set&lt;Teacher, MyAgeSorter&gt; s;
+    s.insert(Teacher(const_cast&lt;char*&gt;(&quot;jack&quot;),18));
+    s.insert(Teacher(const_cast&lt;char*&gt;(&quot;rose&quot;), 20));
+    s.insert(Teacher(const_cast&lt;char*&gt;(&quot;jason&quot;), 22));
+    s.insert(Teacher(const_cast&lt;char*&gt;(&quot;alan&quot;), 5));
+    //s.insert(Teacher(&quot;jimy&quot;, 5)); //不会插入
+
+    for (set&lt;Teacher&gt;::iterator it = s.begin(); it != s.end(); it++)
+    &#123;
+        cout &lt;&lt; (*it).name &lt;&lt; &quot;,&quot; &lt;&lt; (*it).age &lt;&lt; endl;
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="6-3-set-查找"><a href="#6-3-set-查找" class="headerlink" title="6.3 set 查找"></a>6.3 set 查找</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;set&gt;
+using namespace std;
+
+void main()
+&#123;
+    set&lt;int&gt; s;
+    //添加元素
+    for (int i = 0; i &lt; 10; i++)
+    &#123;
+        s.insert(i + 1);
+    &#125;
+
+    //printSet(s);
+
+    //等于4的元素指针
+    set&lt;int&gt;::iterator s_4 = s.lower_bound(4); 
+    //cout &lt;&lt; *s_4 &lt;&lt; endl;
+    //大于4的元素指针
+    set&lt;int&gt;::iterator s_5 = s.upper_bound(4);
+    //cout &lt;&lt; *s_5 &lt;&lt; endl;
+
+    //一次性获取等于4的元素指针，和大于4的元素指针\
+    //BasicNameValuePair
+    pair&lt;set&lt;int&gt;::iterator, set&lt;int&gt;::iterator&gt; p = s.equal_range(4);
+    cout &lt;&lt; *p.first &lt;&lt; endl;
+    cout &lt;&lt; *p.second &lt;&lt; endl;
+    system(&quot;pause&quot;);
+&#125;
+</code></pre><h4 id="6-4-multiset-允许重复的元素"><a href="#6-4-multiset-允许重复的元素" class="headerlink" title="6.4 multiset 允许重复的元素"></a>6.4 multiset 允许重复的元素</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;set&gt;
+using namespace std;
+void main()
+&#123;
+    multiset&lt;int&gt; s;
+    s.insert(2);
+    s.insert(8);
+    s.insert(2);
+    s.insert(8);
+
+    for (multiset&lt;int&gt;::iterator it = s.begin(); it != s.end(); it++)
+    &#123;
+        cout &lt;&lt;  *it &lt;&lt; endl;
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h3 id="7、map-模板"><a href="#7、map-模板" class="headerlink" title="7、map 模板"></a>7、map 模板</h3><h4 id="7-1-map-初始化"><a href="#7-1-map-初始化" class="headerlink" title="7.1 map 初始化"></a>7.1 map 初始化</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+using namespace std;
+
+void main()
+&#123;
+    //key -&gt; value
+    //1.
+    map&lt;int, string&gt; map1;
+    map1.insert(pair&lt;int, string&gt;(1, &quot;jack&quot;));
+    map1.insert(pair&lt;int, string&gt;(2, &quot;rose&quot;));
+
+    //2
+    map1.insert(make_pair(3, &quot;jason&quot;));
+
+    //3
+    map1.insert(map&lt;int, string&gt;::value_type(4, &quot;alan&quot;));
+
+    //4
+    map1[5] = &quot;jimmy&quot;; //map[&quot;NO1&quot;] = 90;
+
+    //前三种方式，如果key已经存在，重复添加会报错
+    //第四种方式，如果key已经存在，重复添加会覆盖
+
+    //遍历输出
+    for (map&lt;int, string&gt;::iterator it = map1.begin(); it != map1.end(); it++)
+    &#123;
+        cout &lt;&lt; it-&gt;first &lt;&lt; &quot;,&quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
+    &#125;
+
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="7-2-map-删除元素的方式"><a href="#7-2-map-删除元素的方式" class="headerlink" title="7.2 map 删除元素的方式"></a>7.2 map 删除元素的方式</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+using namespace std;
+
+void printMap(map&lt;int, string&gt; &amp;map1)
+&#123;
+    for (map&lt;int, string&gt;::iterator it = map1.begin(); it != map1.end(); it++)
+    &#123;
+        cout &lt;&lt; it-&gt;first &lt;&lt; &quot;,&quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
+    &#125;
+&#125;
+
+void main()
+&#123;
+    map&lt;int, string&gt; map1;
+    map1.insert(pair&lt;int, string&gt;(1, &quot;jack&quot;));
+    map1.insert(pair&lt;int, string&gt;(2, &quot;rose&quot;));
+    map1.insert(pair&lt;int, string&gt;(3, &quot;jason&quot;));    
+
+    map&lt;int, string&gt;::iterator it = map1.begin();
+    it++;
+    map1.erase(it);
+
+    printMap(map1);
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="7-3-map-添加元素的结果"><a href="#7-3-map-添加元素的结果" class="headerlink" title="7.3 map 添加元素的结果"></a>7.3 map 添加元素的结果</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+using namespace std;
+
+void main()
+&#123;
+    map&lt;int, string&gt; map1;
+    map1.insert(pair&lt;int, string&gt;(1, &quot;jack&quot;));
+    map1.insert(pair&lt;int, string&gt;(2, &quot;rose&quot;));
+    map1.insert(pair&lt;int, string&gt;(3, &quot;jason&quot;));
+    //获取添加的结果（first元素指针，second 是否成功）
+    pair&lt;map&lt;int, string&gt;::iterator, bool&gt; res = map1.insert(pair&lt;int, string&gt;(3, &quot;alan&quot;));
+    if (res.second)
+    &#123;
+        cout &lt;&lt; &quot;添加成功&quot; &lt;&lt; endl;
+    &#125;
+    else
+    &#123;
+        cout &lt;&lt; &quot;添加失败&quot; &lt;&lt; endl;
+    &#125;
+
+    printMap(map1);
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="7-3-map-查找"><a href="#7-3-map-查找" class="headerlink" title="7.3 map 查找"></a>7.3 map 查找</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+using namespace std;
+
+void main()
+&#123;
+    map&lt;int, string&gt; map1;
+    map1.insert(pair&lt;int, string&gt;(1, &quot;jack&quot;));
+    map1.insert(pair&lt;int, string&gt;(2, &quot;rose&quot;));
+    map1.insert(pair&lt;int, string&gt;(3, &quot;jason&quot;));    
+
+    printMap(map1);
+
+    cout &lt;&lt; &quot;---------&quot; &lt;&lt; endl;
+
+    //获取key等于大于5的元素的值
+    pair&lt;map&lt;int, string&gt;::iterator, map&lt;int, string&gt;::iterator&gt; p = map1.equal_range(2);
+    if (p.first != map1.end())&#123;
+        //等于2的元素key value
+        cout &lt;&lt; p.first-&gt;first &lt;&lt; p.first-&gt;second &lt;&lt; endl;
+
+        //大于2的元素key value
+        cout &lt;&lt; p.second-&gt;first &lt;&lt; p.second-&gt;second &lt;&lt; endl;
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h4 id="7-3-multimap"><a href="#7-3-multimap" class="headerlink" title="7.3 multimap"></a>7.3 multimap</h4><pre><code>#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+using namespace std;
+
+//一个key对应多个value
+//一个部门多个员工
+//multimap
+
+class Employee
+&#123;
+public:
+    Employee(char* name,int age)
+    &#123;
+        this-&gt;name = name;
+        this-&gt;age = age;
+    &#125;
+
+public:
+    char* name;
+    int age;
+&#125;;
+
+void main()
+&#123;
+    multimap&lt;string, Employee&gt; map1;
+
+    //开发部
+    map1.insert(make_pair(&quot;开发&quot;, Employee(const_cast&lt;char*&gt;(&quot;搁浅&quot;), 20)));
+    map1.insert(make_pair(&quot;开发&quot;, Employee(const_cast&lt;char*&gt;(&quot;彪哥&quot;), 20)));
+
+    //财务
+    map1.insert(make_pair(&quot;财务&quot;, Employee(const_cast&lt;char*&gt;(&quot;小颖&quot;), 16)));
+    map1.insert(make_pair(&quot;财务&quot;, Employee(const_cast&lt;char*&gt;(&quot;rose&quot;), 20)));
+
+    //销售
+    map1.insert(make_pair(&quot;销售&quot;, Employee(const_cast&lt;char*&gt;(&quot;阿呆&quot;), 30)));
+    map1.insert(make_pair(&quot;销售&quot;, Employee(const_cast&lt;char*&gt;(&quot;呵呵&quot;), 30)));
+
+    //遍历输出
+    for (multimap&lt;string, Employee&gt;::iterator it = map1.begin(); it != map1.end(); it++)
+    &#123;
+        cout &lt;&lt; it-&gt;first &lt;&lt; &quot;,&quot; &lt;&lt; it-&gt;second.name  &lt;&lt; &quot;,&quot; &lt;&lt; it-&gt;second.age &lt;&lt; endl;
+    &#125;
+
+    cout &lt;&lt; &quot;----------------&quot; &lt;&lt; endl;
+    //只获取“财务”部的员工
+    //获取“财务部”员工的个数，key对应的value的个数
+    int num = map1.count(&quot;财务&quot;);
+    multimap&lt;string, Employee&gt;::iterator it = map1.find(&quot;财务&quot;);
+    int c = 0; //控制循环的次数
+    while (it != map1.end() &amp;&amp; c &lt; num)
+    &#123;
+        cout &lt;&lt; it-&gt;first &lt;&lt; &quot;,&quot; &lt;&lt; it-&gt;second.name &lt;&lt; &quot;,&quot; &lt;&lt; it-&gt;second.age &lt;&lt; endl;
+        it++;
+        c++;
+    &#125;
+
+    system(&quot;pause&quot;);
+&#125;</code></pre><h3 id="8、深拷贝与浅拷贝"><a href="#8、深拷贝与浅拷贝" class="headerlink" title="8、深拷贝与浅拷贝"></a>8、深拷贝与浅拷贝</h3><pre><code>#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+class Employee
+&#123;
+public:
+    //构造函数
+    Employee(char* name, int age)
+    &#123;
+        this-&gt;name = new char[strlen(name) + 1];
+        strcpy(this-&gt;name, name);
+        this-&gt;age = age;
+    &#125;
+
+    //析构函数
+    ~Employee()
+    &#123;
+        if (this-&gt;name != NULL)
+        &#123;
+            delete[] this-&gt;name;
+            this-&gt;name = NULL;
+            this-&gt;age = 0;
+        &#125;
+    &#125;
+    //拷贝构造函数
+    //Employee e = 
+    Employee(const Employee &amp;obj)
+    &#123;
+        this-&gt;name = new char[strlen(obj.name) + 1];
+        strcpy(this-&gt;name, obj.name);
+        this-&gt;age = obj.age;
+    &#125;
+
+    //重载=
+    //e1 = e2;
+    Employee&amp; operator=(const Employee &amp;obj)
+    &#123;
+        //释放旧的内存
+        if (this-&gt;name != NULL)
+        &#123;
+            delete[] this-&gt;name;
+            this-&gt;name = NULL;
+            this-&gt;age = 0;
+        &#125;
+
+        //重新分配
+        this-&gt;name = new char[strlen(obj.name) + 1];
+        strcpy(this-&gt;name, obj.name);
+        this-&gt;age = obj.age;
+
+        return *this;
+    &#125;
+
+public:
+    char* name;
+    int age;
+&#125;;
+
+void func()
+&#123;
+    vector&lt;Employee&gt; v1;
+    Employee e1(const_cast&lt;char*&gt;(&quot;jack&quot;), 20);
+    v1.push_back(e1);
+&#125;
+
+void main()
+&#123;
+    //vector&lt;Employee&gt; v1;
+    //Employee e1(&quot;jack&quot;,20);
+    //将e1拷贝到vector中
+    //v1.push_back(e1);
+
+    func();
+
+    system(&quot;pause&quot;);
+&#125;</code></pre>
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20181123/fb0f12f8cca8/">https://blog.onestravel.cn/20181123/fb0f12f8cca8/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20181206/0151de5b59e5/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">(一)Kotlin 基础语法 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20181103/e3b43d9662e7/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">（五）C++中的异常处理与模板类 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#C-%E4%B8%AD%E7%9A%84%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E4%B8%8ESTL%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">C++中的类型转换与STL标准模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81C-%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2"><span class="toc-text">一、C++类型转换</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81static-cast"><span class="toc-text">1、static_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81const-cast"><span class="toc-text">2、const_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81dynamic-cast"><span class="toc-text">3、dynamic_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81reinterpret-cast"><span class="toc-text">4、reinterpret_cast</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81IO-%E6%B5%81"><span class="toc-text">二、IO 流</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E6%96%87%E6%9C%AC%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toc-text">1、文本文件操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toc-text">2、二进制文件操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E5%AF%B9%E8%B1%A1%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">3、对象持久化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81STL-standard-template-library-%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">三、STL(standard template library)标准模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81string-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">1、string 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-1-string-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">1.1 string 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-string-%E9%81%8D%E5%8E%86"><span class="toc-text">1.2 string 遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-string-%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%9F%A5%E6%89%BE%E6%9B%BF%E6%8D%A2"><span class="toc-text">1.3 string 字符串查找替换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-4-string-%E5%88%A0%E9%99%A4%EF%BC%88%E6%88%AA%E5%8F%96%EF%BC%89%E5%92%8C%E6%8F%92%E5%85%A5"><span class="toc-text">1.4 string 删除（截取）和插入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-5-string-%E5%A4%A7%E5%B0%8F%E5%86%99%E8%BD%AC%E6%8D%A2"><span class="toc-text">1.5 string 大小写转换</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%AE%B9%E5%99%A8-vector-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">2、容器 vector 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-vector-%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E9%81%8D%E5%8E%86"><span class="toc-text">2.1 vector 初始化与遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-vector-%E6%B7%BB%E5%8A%A0%E5%92%8C%E5%88%A0%E9%99%A4"><span class="toc-text">2.2 vector 添加和删除</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-vector-%E6%95%B0%E7%BB%84%E6%96%B9%E5%BC%8F"><span class="toc-text">2.3 vector 数组方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-4-vector-%E8%BF%AD%E4%BB%A3%E5%99%A8%E9%81%8D%E5%8E%86"><span class="toc-text">2.4 vector 迭代器遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-5-vector-%E6%8F%92%E5%85%A5%E5%92%8C%E5%88%A0%E9%99%A4"><span class="toc-text">2.5 vector 插入和删除</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E9%98%9F%E5%88%97-deque-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">3、队列 deque 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-%E5%8F%8C%E5%90%91%E9%98%9F%E5%88%97"><span class="toc-text">3.1 双向队列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-%E6%B2%A1%E6%9C%89%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E9%98%9F%E5%88%97"><span class="toc-text">3.2 没有迭代器的队列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-%E4%BC%98%E5%85%88%E7%BA%A7%E9%98%9F%E5%88%97"><span class="toc-text">3.3 优先级队列</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81stack-%E6%A0%88-%E6%A8%A1%E6%9D%BF"><span class="toc-text">4、stack 栈 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-stack-%E6%A0%88%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">4.1 stack 栈的初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81list-%E6%A8%A1%E6%9D%BF"><span class="toc-text">5、list 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#5-1-list-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">5.1 list 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-2-list-%E6%8F%92%E5%85%A5"><span class="toc-text">5.2 list 插入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-3-list-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">5.3 list 初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81set-%E6%A8%A1%E6%9D%BF"><span class="toc-text">6、set 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#6-1-set-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">6.1 set 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-2-set-%E5%85%83%E7%B4%A0%E6%8C%89%E7%85%A7%E4%BB%8E%E5%A4%A7%E5%88%B0%E5%B0%8F%E6%8E%92%E5%88%97"><span class="toc-text">6.2 set 元素按照从大到小排列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-3-set-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8E%92%E5%BA%8F%E8%A7%84%E5%88%99"><span class="toc-text">6.3 set 自定义排序规则</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-3-set-%E6%9F%A5%E6%89%BE"><span class="toc-text">6.3 set 查找</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-4-multiset-%E5%85%81%E8%AE%B8%E9%87%8D%E5%A4%8D%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-text">6.4 multiset 允许重复的元素</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7%E3%80%81map-%E6%A8%A1%E6%9D%BF"><span class="toc-text">7、map 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#7-1-map-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">7.1 map 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-2-map-%E5%88%A0%E9%99%A4%E5%85%83%E7%B4%A0%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="toc-text">7.2 map 删除元素的方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-map-%E6%B7%BB%E5%8A%A0%E5%85%83%E7%B4%A0%E7%9A%84%E7%BB%93%E6%9E%9C"><span class="toc-text">7.3 map 添加元素的结果</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-map-%E6%9F%A5%E6%89%BE"><span class="toc-text">7.3 map 查找</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-multimap"><span class="toc-text">7.3 multimap</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8%E3%80%81%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D"><span class="toc-text">8、深拷贝与浅拷贝</span></a></li></ol></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#C-%E4%B8%AD%E7%9A%84%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E4%B8%8ESTL%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">C++中的类型转换与STL标准模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81C-%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2"><span class="toc-text">一、C++类型转换</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81static-cast"><span class="toc-text">1、static_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81const-cast"><span class="toc-text">2、const_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81dynamic-cast"><span class="toc-text">3、dynamic_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81reinterpret-cast"><span class="toc-text">4、reinterpret_cast</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81IO-%E6%B5%81"><span class="toc-text">二、IO 流</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E6%96%87%E6%9C%AC%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toc-text">1、文本文件操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toc-text">2、二进制文件操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E5%AF%B9%E8%B1%A1%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">3、对象持久化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81STL-standard-template-library-%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">三、STL(standard template library)标准模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81string-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">1、string 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-1-string-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">1.1 string 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-string-%E9%81%8D%E5%8E%86"><span class="toc-text">1.2 string 遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-string-%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%9F%A5%E6%89%BE%E6%9B%BF%E6%8D%A2"><span class="toc-text">1.3 string 字符串查找替换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-4-string-%E5%88%A0%E9%99%A4%EF%BC%88%E6%88%AA%E5%8F%96%EF%BC%89%E5%92%8C%E6%8F%92%E5%85%A5"><span class="toc-text">1.4 string 删除（截取）和插入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-5-string-%E5%A4%A7%E5%B0%8F%E5%86%99%E8%BD%AC%E6%8D%A2"><span class="toc-text">1.5 string 大小写转换</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%AE%B9%E5%99%A8-vector-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">2、容器 vector 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-vector-%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E9%81%8D%E5%8E%86"><span class="toc-text">2.1 vector 初始化与遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-vector-%E6%B7%BB%E5%8A%A0%E5%92%8C%E5%88%A0%E9%99%A4"><span class="toc-text">2.2 vector 添加和删除</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-vector-%E6%95%B0%E7%BB%84%E6%96%B9%E5%BC%8F"><span class="toc-text">2.3 vector 数组方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-4-vector-%E8%BF%AD%E4%BB%A3%E5%99%A8%E9%81%8D%E5%8E%86"><span class="toc-text">2.4 vector 迭代器遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-5-vector-%E6%8F%92%E5%85%A5%E5%92%8C%E5%88%A0%E9%99%A4"><span class="toc-text">2.5 vector 插入和删除</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E9%98%9F%E5%88%97-deque-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">3、队列 deque 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-%E5%8F%8C%E5%90%91%E9%98%9F%E5%88%97"><span class="toc-text">3.1 双向队列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-%E6%B2%A1%E6%9C%89%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E9%98%9F%E5%88%97"><span class="toc-text">3.2 没有迭代器的队列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-%E4%BC%98%E5%85%88%E7%BA%A7%E9%98%9F%E5%88%97"><span class="toc-text">3.3 优先级队列</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81stack-%E6%A0%88-%E6%A8%A1%E6%9D%BF"><span class="toc-text">4、stack 栈 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-stack-%E6%A0%88%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">4.1 stack 栈的初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81list-%E6%A8%A1%E6%9D%BF"><span class="toc-text">5、list 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#5-1-list-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">5.1 list 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-2-list-%E6%8F%92%E5%85%A5"><span class="toc-text">5.2 list 插入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-3-list-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">5.3 list 初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81set-%E6%A8%A1%E6%9D%BF"><span class="toc-text">6、set 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#6-1-set-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">6.1 set 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-2-set-%E5%85%83%E7%B4%A0%E6%8C%89%E7%85%A7%E4%BB%8E%E5%A4%A7%E5%88%B0%E5%B0%8F%E6%8E%92%E5%88%97"><span class="toc-text">6.2 set 元素按照从大到小排列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-3-set-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8E%92%E5%BA%8F%E8%A7%84%E5%88%99"><span class="toc-text">6.3 set 自定义排序规则</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-3-set-%E6%9F%A5%E6%89%BE"><span class="toc-text">6.3 set 查找</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-4-multiset-%E5%85%81%E8%AE%B8%E9%87%8D%E5%A4%8D%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-text">6.4 multiset 允许重复的元素</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7%E3%80%81map-%E6%A8%A1%E6%9D%BF"><span class="toc-text">7、map 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#7-1-map-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">7.1 map 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-2-map-%E5%88%A0%E9%99%A4%E5%85%83%E7%B4%A0%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="toc-text">7.2 map 删除元素的方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-map-%E6%B7%BB%E5%8A%A0%E5%85%83%E7%B4%A0%E7%9A%84%E7%BB%93%E6%9E%9C"><span class="toc-text">7.3 map 添加元素的结果</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-map-%E6%9F%A5%E6%89%BE"><span class="toc-text">7.3 map 查找</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-multimap"><span class="toc-text">7.3 multimap</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8%E3%80%81%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D"><span class="toc-text">8、深拷贝与浅拷贝</span></a></li></ol></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#C-%E4%B8%AD%E7%9A%84%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E4%B8%8ESTL%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">C++中的类型转换与STL标准模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81C-%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2"><span class="toc-text">一、C++类型转换</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81static-cast"><span class="toc-text">1、static_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81const-cast"><span class="toc-text">2、const_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81dynamic-cast"><span class="toc-text">3、dynamic_cast</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81reinterpret-cast"><span class="toc-text">4、reinterpret_cast</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81IO-%E6%B5%81"><span class="toc-text">二、IO 流</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E6%96%87%E6%9C%AC%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toc-text">1、文本文件操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toc-text">2、二进制文件操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E5%AF%B9%E8%B1%A1%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">3、对象持久化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81STL-standard-template-library-%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">三、STL(standard template library)标准模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81string-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">1、string 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-1-string-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">1.1 string 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-string-%E9%81%8D%E5%8E%86"><span class="toc-text">1.2 string 遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-string-%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%9F%A5%E6%89%BE%E6%9B%BF%E6%8D%A2"><span class="toc-text">1.3 string 字符串查找替换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-4-string-%E5%88%A0%E9%99%A4%EF%BC%88%E6%88%AA%E5%8F%96%EF%BC%89%E5%92%8C%E6%8F%92%E5%85%A5"><span class="toc-text">1.4 string 删除（截取）和插入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-5-string-%E5%A4%A7%E5%B0%8F%E5%86%99%E8%BD%AC%E6%8D%A2"><span class="toc-text">1.5 string 大小写转换</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%AE%B9%E5%99%A8-vector-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">2、容器 vector 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-vector-%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E9%81%8D%E5%8E%86"><span class="toc-text">2.1 vector 初始化与遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-vector-%E6%B7%BB%E5%8A%A0%E5%92%8C%E5%88%A0%E9%99%A4"><span class="toc-text">2.2 vector 添加和删除</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-vector-%E6%95%B0%E7%BB%84%E6%96%B9%E5%BC%8F"><span class="toc-text">2.3 vector 数组方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-4-vector-%E8%BF%AD%E4%BB%A3%E5%99%A8%E9%81%8D%E5%8E%86"><span class="toc-text">2.4 vector 迭代器遍历</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-5-vector-%E6%8F%92%E5%85%A5%E5%92%8C%E5%88%A0%E9%99%A4"><span class="toc-text">2.5 vector 插入和删除</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E9%98%9F%E5%88%97-deque-%E6%A8%A1%E6%9D%BF%E5%BA%93"><span class="toc-text">3、队列 deque 模板库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-%E5%8F%8C%E5%90%91%E9%98%9F%E5%88%97"><span class="toc-text">3.1 双向队列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-%E6%B2%A1%E6%9C%89%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E9%98%9F%E5%88%97"><span class="toc-text">3.2 没有迭代器的队列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-%E4%BC%98%E5%85%88%E7%BA%A7%E9%98%9F%E5%88%97"><span class="toc-text">3.3 优先级队列</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81stack-%E6%A0%88-%E6%A8%A1%E6%9D%BF"><span class="toc-text">4、stack 栈 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-stack-%E6%A0%88%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">4.1 stack 栈的初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81list-%E6%A8%A1%E6%9D%BF"><span class="toc-text">5、list 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#5-1-list-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">5.1 list 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-2-list-%E6%8F%92%E5%85%A5"><span class="toc-text">5.2 list 插入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-3-list-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">5.3 list 初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81set-%E6%A8%A1%E6%9D%BF"><span class="toc-text">6、set 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#6-1-set-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">6.1 set 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-2-set-%E5%85%83%E7%B4%A0%E6%8C%89%E7%85%A7%E4%BB%8E%E5%A4%A7%E5%88%B0%E5%B0%8F%E6%8E%92%E5%88%97"><span class="toc-text">6.2 set 元素按照从大到小排列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-3-set-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8E%92%E5%BA%8F%E8%A7%84%E5%88%99"><span class="toc-text">6.3 set 自定义排序规则</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-3-set-%E6%9F%A5%E6%89%BE"><span class="toc-text">6.3 set 查找</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-4-multiset-%E5%85%81%E8%AE%B8%E9%87%8D%E5%A4%8D%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-text">6.4 multiset 允许重复的元素</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7%E3%80%81map-%E6%A8%A1%E6%9D%BF"><span class="toc-text">7、map 模板</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#7-1-map-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">7.1 map 初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-2-map-%E5%88%A0%E9%99%A4%E5%85%83%E7%B4%A0%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="toc-text">7.2 map 删除元素的方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-map-%E6%B7%BB%E5%8A%A0%E5%85%83%E7%B4%A0%E7%9A%84%E7%BB%93%E6%9E%9C"><span class="toc-text">7.3 map 添加元素的结果</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-map-%E6%9F%A5%E6%89%BE"><span class="toc-text">7.3 map 查找</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-3-multimap"><span class="toc-text">7.3 multimap</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8%E3%80%81%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D"><span class="toc-text">8、深拷贝与浅拷贝</span></a></li></ol></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

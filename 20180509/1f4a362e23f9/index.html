@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>从零开始-使用IntelliJ IDEA创建SpringBoot项目</title>
+  
+  
+  <meta property="og:title" content="从零开始-使用IntelliJ IDEA创建SpringBoot项目">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20180509/1f4a362e23f9/index.html">
+  
+  
+  <meta property="og:img" content="/images/20180509/springboot.png">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2018-05-09">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Intellij IDEA">
+  
+  <meta property="og:article:tag" content="Java">
+  
+  <meta property="og:article:tag" content="SpringBoot">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/20180509/springboot.png" data-src="/images/20180509/springboot.png"
+    srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      从零开始-使用IntelliJ IDEA创建SpringBoot项目
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2018-05-09T02:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2018-05-09</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/SpringBoot/" class="post-meta-link">SpringBoot</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>686 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Intellij-IDEA/" class="post-meta-link">Intellij IDEA</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Java/" class="post-meta-link">Java</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/SpringBoot/" class="post-meta-link">SpringBoot</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="从零开始-使用IntelliJ-IDEA创建SpringBoot项目"><a href="#从零开始-使用IntelliJ-IDEA创建SpringBoot项目" class="headerlink" title="从零开始-使用IntelliJ IDEA创建SpringBoot项目"></a>从零开始-使用IntelliJ IDEA创建SpringBoot项目</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><strong>*注：此文章谨以记录学习过程，分享学习心得！</strong></p>
+<p>刚刚开始了解SpringBoot框架，觉得很好用，觉得很有必要深入学习一下该框架，现在就来创建一个SpringBoot项目：</p>
+<h2 id="新建项目"><a href="#新建项目" class="headerlink" title="新建项目"></a>新建项目</h2><h3 id="1、在IDEA上新建一个Project"><a href="#1、在IDEA上新建一个Project" class="headerlink" title="1、在IDEA上新建一个Project"></a>1、在IDEA上新建一个Project</h3><p>​    在IDEA上新建一个Project，选择Spring Initializr,<br>​      Project SDK 选择安装的JDK；<br>​      Choose Initializr Service URL  选择默认（Default：<a target="_blank" rel="noopener" href="https://start.spring.io）">https://start.spring.io）</a></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-3dd7f5da4930f511.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="选择项目模板" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-3dd7f5da4930f511.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<p>点击Next</p>
+<h3 id="2、进行项目配置"><a href="#2、进行项目配置" class="headerlink" title="2、进行项目配置"></a>2、进行项目配置</h3><p>设置项目数组（group），项目标识（Artifact），Type选择一个Maven Project 表示是一个maven项目<br>Version：项目版本号<br>Name：项目名称<br>Description：项目描述<br>Package：项目包名</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-ca5e4ffea9f0a2a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="项目配置" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-ca5e4ffea9f0a2a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<p>点击Next 下一步</p>
+<h3 id="3、选择项目模板"><a href="#3、选择项目模板" class="headerlink" title="3、选择项目模板"></a>3、选择项目模板</h3><p>我们来选择创建一个Web项目<br>选择Spring Boot版本</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-e84e96fd9ff5e6e9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="选择项目模板" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-e84e96fd9ff5e6e9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<h3 id="4、设置项目名称和项目路径"><a href="#4、设置项目名称和项目路径" class="headerlink" title="4、设置项目名称和项目路径"></a>4、设置项目名称和项目路径</h3><p><img src="https://upload-images.jianshu.io/upload_images/3236417-e76ff34a55cf62aa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="设置项目名称和项目路径" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-e76ff34a55cf62aa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"><br>设置完项目路径，和项目名称后，点击FInish，创建项目完成，需要进行项目构建，等一小会即可完成。</p>
+<h3 id="5、创建完成，我们删除-mvn文件夹，mvnw文件和-mvnw-cmd文件"><a href="#5、创建完成，我们删除-mvn文件夹，mvnw文件和-mvnw-cmd文件" class="headerlink" title="5、创建完成，我们删除.mvn文件夹，mvnw文件和 mvnw.cmd文件"></a>5、创建完成，我们删除.mvn文件夹，mvnw文件和 mvnw.cmd文件</h3><p><img src="https://upload-images.jianshu.io/upload_images/3236417-13751e9373b17cf6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="删除文件" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-13751e9373b17cf6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<h3 id="6、maven配置的pom-xml文件"><a href="#6、maven配置的pom-xml文件" class="headerlink" title="6、maven配置的pom.xml文件"></a>6、maven配置的pom.xml文件</h3><p>我们来看一下maven配置的pom.xml文件，里面包含了SpringBoot项目运行所需的版本库</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-e29067d2f0672163.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="pom.xml" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-e29067d2f0672163.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<p>SpringBoot运行所需库为：</p>
+<pre><code>&lt;!-- SpringBoot项目的基础库文件--&gt;
+    &lt;parent&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+        &lt;version&gt;2.0.1.RELEASE&lt;/version&gt;
+        &lt;relativePath/&gt; &lt;!-- lookup parent from repository --&gt;
+    &lt;/parent&gt;</code></pre><pre><code>&lt;!-- SpringBoot项目的基础库文件--&gt;
+    &lt;dependencies&gt;
+&lt;!-- web项目库--&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+        &lt;/dependency&gt;
+&lt;!-- 测试所需库--&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+            &lt;scope&gt;test&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;</code></pre><h3 id="7、创建一个HelloService"><a href="#7、创建一个HelloService" class="headerlink" title="7、创建一个HelloService"></a>7、创建一个HelloService</h3><pre><code>package com.example.springbootdemo.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public interface HelloService &#123;
+    String sayHello();
+&#125;
+</code></pre><h3 id="8、创建HelloService的实现类HelloServiceImpl，实现sayHello-方法，返回”Hello-World-”"><a href="#8、创建HelloService的实现类HelloServiceImpl，实现sayHello-方法，返回”Hello-World-”" class="headerlink" title="8、创建HelloService的实现类HelloServiceImpl，实现sayHello()方法，返回”Hello World!”"></a>8、创建HelloService的实现类HelloServiceImpl，实现sayHello()方法，返回”Hello World!”</h3><pre><code>package com.example.springbootdemo.service.impl;
+
+import com.example.springbootdemo.service.HelloService;
+import org.springframework.stereotype.Component;
+
+@Component
+public class HelloServiceImpl implements HelloService &#123;
+    @Override
+    public String sayHello() &#123;
+        return &quot;Hello World!&quot;;
+    &#125;
+&#125;
+
+</code></pre><h3 id="9、创建HelloController，调用HelloService实现类，打印”Hello-World-”到浏览器"><a href="#9、创建HelloController，调用HelloService实现类，打印”Hello-World-”到浏览器" class="headerlink" title="9、创建HelloController，调用HelloService实现类，打印”Hello World!”到浏览器"></a>9、创建HelloController，调用HelloService实现类，打印”Hello World!”到浏览器</h3><pre><code>package com.example.springbootdemo.controller;
+
+import com.example.springbootdemo.service.HelloService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+@RequestMapping(&quot;/&quot;)
+public class HelloController &#123;
+    @Autowired
+    private HelloService helloService;
+
+    @RequestMapping(&quot;/hello&quot;)
+    @ResponseBody
+    public String helloWorld()&#123;
+        return helloService.sayHello();
+    &#125;
+&#125;
+</code></pre><h3 id="10、见证奇迹的时刻，我们来运行一下所建项目，看能不能跟我们预期一样，在浏览器输入访问地址http-localhost-8080-hello"><a href="#10、见证奇迹的时刻，我们来运行一下所建项目，看能不能跟我们预期一样，在浏览器输入访问地址http-localhost-8080-hello" class="headerlink" title="10、见证奇迹的时刻，我们来运行一下所建项目，看能不能跟我们预期一样，在浏览器输入访问地址http://localhost:8080/hello"></a>10、见证奇迹的时刻，我们来运行一下所建项目，看能不能跟我们预期一样，在浏览器输入访问地址<a target="_blank" rel="noopener" href="http://localhost:8080/hello">http://localhost:8080/hello</a></h3><p>就可以看到Hello World!<br>至此，学习创建一个SpringBoot项目就完成了。</p>
+<h2 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h2><p><a target="_blank" rel="noopener" href="https://github.com/onestravel/SpringBootDemo">查看源码</a></p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20180509/1f4a362e23f9/">https://blog.onestravel.cn/20180509/1f4a362e23f9/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20180509/a6065fafcad9/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">在Windows系统上安装Jenkins ---- Jenkins自动化部署学习笔记（一） </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20180506/d52aed55d60c/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">最全IDEA快捷键总结，大幅度提高工作效率 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B-%E4%BD%BF%E7%94%A8IntelliJ-IDEA%E5%88%9B%E5%BB%BASpringBoot%E9%A1%B9%E7%9B%AE"><span class="toc-text">从零开始-使用IntelliJ IDEA创建SpringBoot项目</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-text">新建项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E5%9C%A8IDEA%E4%B8%8A%E6%96%B0%E5%BB%BA%E4%B8%80%E4%B8%AAProject"><span class="toc-text">1、在IDEA上新建一个Project</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%BF%9B%E8%A1%8C%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="toc-text">2、进行项目配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E9%80%89%E6%8B%A9%E9%A1%B9%E7%9B%AE%E6%A8%A1%E6%9D%BF"><span class="toc-text">3、选择项目模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E8%AE%BE%E7%BD%AE%E9%A1%B9%E7%9B%AE%E5%90%8D%E7%A7%B0%E5%92%8C%E9%A1%B9%E7%9B%AE%E8%B7%AF%E5%BE%84"><span class="toc-text">4、设置项目名称和项目路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E5%88%9B%E5%BB%BA%E5%AE%8C%E6%88%90%EF%BC%8C%E6%88%91%E4%BB%AC%E5%88%A0%E9%99%A4-mvn%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%8Cmvnw%E6%96%87%E4%BB%B6%E5%92%8C-mvnw-cmd%E6%96%87%E4%BB%B6"><span class="toc-text">5、创建完成，我们删除.mvn文件夹，mvnw文件和 mvnw.cmd文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81maven%E9%85%8D%E7%BD%AE%E7%9A%84pom-xml%E6%96%87%E4%BB%B6"><span class="toc-text">6、maven配置的pom.xml文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7%E3%80%81%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAHelloService"><span class="toc-text">7、创建一个HelloService</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8%E3%80%81%E5%88%9B%E5%BB%BAHelloService%E7%9A%84%E5%AE%9E%E7%8E%B0%E7%B1%BBHelloServiceImpl%EF%BC%8C%E5%AE%9E%E7%8E%B0sayHello-%E6%96%B9%E6%B3%95%EF%BC%8C%E8%BF%94%E5%9B%9E%E2%80%9DHello-World-%E2%80%9D"><span class="toc-text">8、创建HelloService的实现类HelloServiceImpl，实现sayHello()方法，返回”Hello World!”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9%E3%80%81%E5%88%9B%E5%BB%BAHelloController%EF%BC%8C%E8%B0%83%E7%94%A8HelloService%E5%AE%9E%E7%8E%B0%E7%B1%BB%EF%BC%8C%E6%89%93%E5%8D%B0%E2%80%9DHello-World-%E2%80%9D%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8"><span class="toc-text">9、创建HelloController，调用HelloService实现类，打印”Hello World!”到浏览器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10%E3%80%81%E8%A7%81%E8%AF%81%E5%A5%87%E8%BF%B9%E7%9A%84%E6%97%B6%E5%88%BB%EF%BC%8C%E6%88%91%E4%BB%AC%E6%9D%A5%E8%BF%90%E8%A1%8C%E4%B8%80%E4%B8%8B%E6%89%80%E5%BB%BA%E9%A1%B9%E7%9B%AE%EF%BC%8C%E7%9C%8B%E8%83%BD%E4%B8%8D%E8%83%BD%E8%B7%9F%E6%88%91%E4%BB%AC%E9%A2%84%E6%9C%9F%E4%B8%80%E6%A0%B7%EF%BC%8C%E5%9C%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BE%93%E5%85%A5%E8%AE%BF%E9%97%AE%E5%9C%B0%E5%9D%80http-localhost-8080-hello"><span class="toc-text">10、见证奇迹的时刻，我们来运行一下所建项目，看能不能跟我们预期一样，在浏览器输入访问地址http:&#x2F;&#x2F;localhost:8080&#x2F;hello</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BA%90%E7%A0%81"><span class="toc-text">源码</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B-%E4%BD%BF%E7%94%A8IntelliJ-IDEA%E5%88%9B%E5%BB%BASpringBoot%E9%A1%B9%E7%9B%AE"><span class="toc-text">从零开始-使用IntelliJ IDEA创建SpringBoot项目</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-text">新建项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E5%9C%A8IDEA%E4%B8%8A%E6%96%B0%E5%BB%BA%E4%B8%80%E4%B8%AAProject"><span class="toc-text">1、在IDEA上新建一个Project</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%BF%9B%E8%A1%8C%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="toc-text">2、进行项目配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E9%80%89%E6%8B%A9%E9%A1%B9%E7%9B%AE%E6%A8%A1%E6%9D%BF"><span class="toc-text">3、选择项目模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E8%AE%BE%E7%BD%AE%E9%A1%B9%E7%9B%AE%E5%90%8D%E7%A7%B0%E5%92%8C%E9%A1%B9%E7%9B%AE%E8%B7%AF%E5%BE%84"><span class="toc-text">4、设置项目名称和项目路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E5%88%9B%E5%BB%BA%E5%AE%8C%E6%88%90%EF%BC%8C%E6%88%91%E4%BB%AC%E5%88%A0%E9%99%A4-mvn%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%8Cmvnw%E6%96%87%E4%BB%B6%E5%92%8C-mvnw-cmd%E6%96%87%E4%BB%B6"><span class="toc-text">5、创建完成，我们删除.mvn文件夹，mvnw文件和 mvnw.cmd文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81maven%E9%85%8D%E7%BD%AE%E7%9A%84pom-xml%E6%96%87%E4%BB%B6"><span class="toc-text">6、maven配置的pom.xml文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7%E3%80%81%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAHelloService"><span class="toc-text">7、创建一个HelloService</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8%E3%80%81%E5%88%9B%E5%BB%BAHelloService%E7%9A%84%E5%AE%9E%E7%8E%B0%E7%B1%BBHelloServiceImpl%EF%BC%8C%E5%AE%9E%E7%8E%B0sayHello-%E6%96%B9%E6%B3%95%EF%BC%8C%E8%BF%94%E5%9B%9E%E2%80%9DHello-World-%E2%80%9D"><span class="toc-text">8、创建HelloService的实现类HelloServiceImpl，实现sayHello()方法，返回”Hello World!”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9%E3%80%81%E5%88%9B%E5%BB%BAHelloController%EF%BC%8C%E8%B0%83%E7%94%A8HelloService%E5%AE%9E%E7%8E%B0%E7%B1%BB%EF%BC%8C%E6%89%93%E5%8D%B0%E2%80%9DHello-World-%E2%80%9D%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8"><span class="toc-text">9、创建HelloController，调用HelloService实现类，打印”Hello World!”到浏览器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10%E3%80%81%E8%A7%81%E8%AF%81%E5%A5%87%E8%BF%B9%E7%9A%84%E6%97%B6%E5%88%BB%EF%BC%8C%E6%88%91%E4%BB%AC%E6%9D%A5%E8%BF%90%E8%A1%8C%E4%B8%80%E4%B8%8B%E6%89%80%E5%BB%BA%E9%A1%B9%E7%9B%AE%EF%BC%8C%E7%9C%8B%E8%83%BD%E4%B8%8D%E8%83%BD%E8%B7%9F%E6%88%91%E4%BB%AC%E9%A2%84%E6%9C%9F%E4%B8%80%E6%A0%B7%EF%BC%8C%E5%9C%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BE%93%E5%85%A5%E8%AE%BF%E9%97%AE%E5%9C%B0%E5%9D%80http-localhost-8080-hello"><span class="toc-text">10、见证奇迹的时刻，我们来运行一下所建项目，看能不能跟我们预期一样，在浏览器输入访问地址http:&#x2F;&#x2F;localhost:8080&#x2F;hello</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BA%90%E7%A0%81"><span class="toc-text">源码</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B-%E4%BD%BF%E7%94%A8IntelliJ-IDEA%E5%88%9B%E5%BB%BASpringBoot%E9%A1%B9%E7%9B%AE"><span class="toc-text">从零开始-使用IntelliJ IDEA创建SpringBoot项目</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-text">新建项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E5%9C%A8IDEA%E4%B8%8A%E6%96%B0%E5%BB%BA%E4%B8%80%E4%B8%AAProject"><span class="toc-text">1、在IDEA上新建一个Project</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%BF%9B%E8%A1%8C%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="toc-text">2、进行项目配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E9%80%89%E6%8B%A9%E9%A1%B9%E7%9B%AE%E6%A8%A1%E6%9D%BF"><span class="toc-text">3、选择项目模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E8%AE%BE%E7%BD%AE%E9%A1%B9%E7%9B%AE%E5%90%8D%E7%A7%B0%E5%92%8C%E9%A1%B9%E7%9B%AE%E8%B7%AF%E5%BE%84"><span class="toc-text">4、设置项目名称和项目路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E5%88%9B%E5%BB%BA%E5%AE%8C%E6%88%90%EF%BC%8C%E6%88%91%E4%BB%AC%E5%88%A0%E9%99%A4-mvn%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%8Cmvnw%E6%96%87%E4%BB%B6%E5%92%8C-mvnw-cmd%E6%96%87%E4%BB%B6"><span class="toc-text">5、创建完成，我们删除.mvn文件夹，mvnw文件和 mvnw.cmd文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81maven%E9%85%8D%E7%BD%AE%E7%9A%84pom-xml%E6%96%87%E4%BB%B6"><span class="toc-text">6、maven配置的pom.xml文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7%E3%80%81%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAHelloService"><span class="toc-text">7、创建一个HelloService</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8%E3%80%81%E5%88%9B%E5%BB%BAHelloService%E7%9A%84%E5%AE%9E%E7%8E%B0%E7%B1%BBHelloServiceImpl%EF%BC%8C%E5%AE%9E%E7%8E%B0sayHello-%E6%96%B9%E6%B3%95%EF%BC%8C%E8%BF%94%E5%9B%9E%E2%80%9DHello-World-%E2%80%9D"><span class="toc-text">8、创建HelloService的实现类HelloServiceImpl，实现sayHello()方法，返回”Hello World!”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9%E3%80%81%E5%88%9B%E5%BB%BAHelloController%EF%BC%8C%E8%B0%83%E7%94%A8HelloService%E5%AE%9E%E7%8E%B0%E7%B1%BB%EF%BC%8C%E6%89%93%E5%8D%B0%E2%80%9DHello-World-%E2%80%9D%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8"><span class="toc-text">9、创建HelloController，调用HelloService实现类，打印”Hello World!”到浏览器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10%E3%80%81%E8%A7%81%E8%AF%81%E5%A5%87%E8%BF%B9%E7%9A%84%E6%97%B6%E5%88%BB%EF%BC%8C%E6%88%91%E4%BB%AC%E6%9D%A5%E8%BF%90%E8%A1%8C%E4%B8%80%E4%B8%8B%E6%89%80%E5%BB%BA%E9%A1%B9%E7%9B%AE%EF%BC%8C%E7%9C%8B%E8%83%BD%E4%B8%8D%E8%83%BD%E8%B7%9F%E6%88%91%E4%BB%AC%E9%A2%84%E6%9C%9F%E4%B8%80%E6%A0%B7%EF%BC%8C%E5%9C%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BE%93%E5%85%A5%E8%AE%BF%E9%97%AE%E5%9C%B0%E5%9D%80http-localhost-8080-hello"><span class="toc-text">10、见证奇迹的时刻，我们来运行一下所建项目，看能不能跟我们预期一样，在浏览器输入访问地址http:&#x2F;&#x2F;localhost:8080&#x2F;hello</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BA%90%E7%A0%81"><span class="toc-text">源码</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

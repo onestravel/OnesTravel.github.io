@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>(二)Kotlin 面向对象</title>
+  
+  
+  <meta property="og:title" content="(二)Kotlin 面向对象">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20181207/c5692c65d25c/index.html">
+  
+  
+  <meta property="og:img" content="/images/kotlin.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2018-12-07">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="Kotlin">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/kotlin.jpg" data-src="/images/kotlin.jpg"
+    srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      (二)Kotlin 面向对象
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2018-12-07T02:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2018-12-07</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/Kotlin/" class="post-meta-link">Kotlin</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>1.3k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Kotlin/" class="post-meta-link">Kotlin</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h3 id="一、面向对象的概念"><a href="#一、面向对象的概念" class="headerlink" title="一、面向对象的概念"></a>一、面向对象的概念</h3><ul>
+<li>本质上就是解决如何用程序描述世界的问题</li>
+<li>讨论如何把实际存在的东西映射成程序的类和对象</li>
+<li>一种程序设计的思路,思想,方法</li>
+<li>程序设计层面的概念</li>
+<li>设计模式：前人的程序设计经验</li>
+</ul>
+<h3 id="二、抽象类与接口"><a href="#二、抽象类与接口" class="headerlink" title="二、抽象类与接口"></a>二、抽象类与接口</h3><p>相当于半成品与协议</p>
+<h4 id="1、接口"><a href="#1、接口" class="headerlink" title="1、接口"></a>1、接口</h4><ul>
+<li>接口，直观理解就是一种约定</li>
+</ul>
+<pre><code>interface InputDevice&#123;
+    fun input(event: Any)
+&#125;</code></pre><ul>
+<li>接口不能有状态</li>
+<li>必须由类对其进行实现后使用</li>
+</ul>
+<h4 id="2、抽象类"><a href="#2、抽象类" class="headerlink" title="2、抽象类"></a>2、抽象类</h4><ul>
+<li>实现了一部分协议的半成品</li>
+<li>可以有状态，可以有方法实现</li>
+<li>必须由子类继承后使用</li>
+</ul>
+<h4 id="3、抽象类和接口的共性"><a href="#3、抽象类和接口的共性" class="headerlink" title="3、抽象类和接口的共性"></a>3、抽象类和接口的共性</h4><ul>
+<li>比较抽象，不能直接实例化</li>
+<li>需要有子类（实现类）实现的方法</li>
+<li>父类（接口）变量可以接受子类（实现类）的赋值</li>
+</ul>
+<h4 id="3、抽象类和接口的区别"><a href="#3、抽象类和接口的区别" class="headerlink" title="3、抽象类和接口的区别"></a>3、抽象类和接口的区别</h4><ul>
+<li>抽象类有状态，接口没有状态</li>
+<li>抽象类有方法实现，接口只能有无状态的默认实现</li>
+<li>抽象类只能单继承，接口可以多实现</li>
+<li>抽象类反应本质，接口体现能力</li>
+</ul>
+<h3 id="三、类的继承与接口的实现"><a href="#三、类的继承与接口的实现" class="headerlink" title="三、类的继承与接口的实现"></a>三、类的继承与接口的实现</h3><ul>
+<li>父类需要 open 才可以被继承</li>
+<li>父类方法、属性需要 open 才可以倍复写</li>
+<li>接口、接口方法、抽象类默认为 open</li>
+<li>复写父类（接口）成员需要 override 关键字</li>
+<li>class D:A(),B,C</li>
+<li>注意继承类时实际上调用了父类构造方法</li>
+<li>类只能单继承，接口可以多实现</li>
+</ul>
+<h4 id="接口代理"><a href="#接口代理" class="headerlink" title="接口代理"></a>接口代理</h4><ul>
+<li>class Manager(driver: Driver):Driver by driver</li>
+<li>接口方法实现交给代理类实现</li>
+</ul>
+<h4 id="接口方法冲突"><a href="#接口方法冲突" class="headerlink" title="接口方法冲突"></a>接口方法冲突</h4><pre><code>- 接口方法可以有默认实现
+- 签名一致且返回值相同的冲突
+- 子类（实现类）必须复写冲突方法
+- super&lt;[父类（接口）名]&gt;.[方法名]([参数列表])</code></pre><h3 id="四、类及其成员的可见性"><a href="#四、类及其成员的可见性" class="headerlink" title="四、类及其成员的可见性"></a>四、类及其成员的可见性</h3><table>
+<thead>
+<tr>
+<th>Kotlin</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>private</td>
+<td>private</td>
+</tr>
+<tr>
+<td>protected</td>
+<td>protected</td>
+</tr>
+<tr>
+<td>–</td>
+<td>default(包内可见)</td>
+</tr>
+<tr>
+<td>internal(模块内可见)</td>
+<td>–</td>
+</tr>
+<tr>
+<td>public</td>
+<td>public</td>
+</tr>
+</tbody></table>
+<h3 id="五、object"><a href="#五、object" class="headerlink" title="五、object"></a>五、object</h3><ul>
+<li>只有一个实例的类（单例）</li>
+<li>不能自定义构造方法</li>
+<li>可以实现接口、继承父类</li>
+<li>本质上就是单例模式最基本的实现</li>
+</ul>
+<h3 id="六、伴生对象与静态成员"><a href="#六、伴生对象与静态成员" class="headerlink" title="六、伴生对象与静态成员"></a>六、伴生对象与静态成员</h3><ul>
+<li>每个类可以对应一个伴生对象</li>
+<li>伴生对象的成员全局独一份</li>
+<li>伴生对象的成员类似Java的静态成员</li>
+<li>静态成员考虑用包级函数、变量代替</li>
+<li>使用JvmField和JvmStatic，可以让伴生对象在Java中使用时看起来像静态成员和静态方法</li>
+</ul>
+<h3 id="七、方法重载-Overloads-和默认参数"><a href="#七、方法重载-Overloads-和默认参数" class="headerlink" title="七、方法重载(Overloads)和默认参数"></a>七、方法重载(Overloads)和默认参数</h3><h5 id="重载"><a href="#重载" class="headerlink" title="重载"></a>重载</h5><ul>
+<li>写了一个方法和已经存在的方法重名，参数不相同</li>
+<li>Jvm函数签名的概念：函数名、参数列表</li>
+<li>跟返回值没有关系</li>
+</ul>
+<h5 id="默认参数"><a href="#默认参数" class="headerlink" title="默认参数"></a>默认参数</h5><ul>
+<li>为函数参数设定一个默认值</li>
+<li>可以为任意位置的参数设置默认值</li>
+<li>函数调用产生混淆时用具名参数</li>
+</ul>
+<h5 id="方法重载与默认参数"><a href="#方法重载与默认参数" class="headerlink" title="方法重载与默认参数"></a>方法重载与默认参数</h5><ul>
+<li>方法重载与默认参数可以互相转换，在Java中调用有默认参数的方法时，该方法需要使用注解@JvmOverloads</li>
+<li>避免定义关系不大的重载方法</li>
+</ul>
+<h3 id="八、扩展成员（二次加工）"><a href="#八、扩展成员（二次加工）" class="headerlink" title="八、扩展成员（二次加工）"></a>八、扩展成员（二次加工）</h3><ul>
+<li><p>为现有类添加方法、属性</p>
+</li>
+<li><pre><code>fun X.y():Z&#123;...&#125;
+val X.m
+//注意扩展属性不能初始化，类似接口属性</code></pre></li>
+<li><p>Java 调用扩展成员类似调用静态方法</p>
+</li>
+</ul>
+<h3 id="九、属性代理"><a href="#九、属性代理" class="headerlink" title="九、属性代理"></a>九、属性代理</h3><ul>
+<li><p>定义方法</p>
+</li>
+<li><pre><code>val/var &lt;property name&gt;: &lt;Type&gt; by &lt;expression&gt;</code></pre></li>
+<li><p>代理者需要实现相应的setValue/getValue方法</p>
+</li>
+<li><p>by lazy 就是在第一次使用的时候才去实例化对象</p>
+</li>
+</ul>
+<h3 id="十、数据类（data-class）"><a href="#十、数据类（data-class）" class="headerlink" title="十、数据类（data class）"></a>十、数据类（data class）</h3><ul>
+<li>默认实现 copy()、toString()、equals()等方法</li>
+<li>编译器默认生成component[1-N]方法，可以自己复写</li>
+</ul>
+<pre><code>data class China(val code:Int,name: String)
+val (a,b) = China(0,&quot;中国&quot;)
+pringln(&quot;$a -&gt; $b&quot;)</code></pre><ul>
+<li>allOpen和noArg 插件解决data class 的类被解析成final类，并且无空构造方法的问题</li>
+</ul>
+<pre><code>//build.gradle 中的 dependencies 中添加
+dependencies&#123;
+    classpath &quot;org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version&quot;
+    classpath &quot;org.jetbrains.kotlin:kotlin-noarg:$kotlin_version&quot;
+    classpath &quot;org.jetbrains.kotlin:kotlin-allopen:$kotlin_version&quot;
+&#125;
+
+//build.gradle 中 添加插件的应用
+apply plugin: &#39;kotlin-noarg&#39;
+apply plugin: &#39;kotlin-allopen&#39;
+
+// 插件的配置
+
+noArg&#123;
+    annotation(&quot;注解类名&quot;)
+&#125;
+
+allOpen&#123;
+    annotation(&quot;注解类名&quot;)
+&#125;</code></pre><ul>
+<li>属性需要写到构造方法，初始化时需要传入参数</li>
+</ul>
+<h3 id="十一、内部类"><a href="#十一、内部类" class="headerlink" title="十一、内部类"></a>十一、内部类</h3><ul>
+<li>定义在类内部的类</li>
+<li>与类成员有相似的访问控制</li>
+<li>默认是静态内部类，非静态用 inner 关键字</li>
+<li>this@Outter 与 this@Inner</li>
+</ul>
+<h5 id="匿名内部类"><a href="#匿名内部类" class="headerlink" title="匿名内部类"></a>匿名内部类</h5><ul>
+<li>没有定义名字的类</li>
+<li>类名编译时生成，类似Outter$1.class</li>
+<li>可继承父类、实现多个接口，与Java 不一样</li>
+</ul>
+<h3 id="十二、枚举类"><a href="#十二、枚举类" class="headerlink" title="十二、枚举类"></a>十二、枚举类</h3><ul>
+<li>实例可数的类，注意枚举也是类</li>
+<li>可以修改构造方法，添加成员</li>
+<li>可以提升代码的表现力，也有一定的性能开销</li>
+</ul>
+<h3 id="十二、密封类（sealed-class）"><a href="#十二、密封类（sealed-class）" class="headerlink" title="十二、密封类（sealed class）"></a>十二、密封类（sealed class）</h3><ul>
+<li>子类可数的类  </li>
+<li>&lt;V1.1,子类必须定义为密封类的内部类   </li>
+<li>v1.1开始,子类只需要与密封类在同一个文件中</li>
+<li>子类可以有多个构造参数</li>
+<li>表示状态适合使用枚举，需要传输指令时适合使用密封类</li>
+</ul>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20181207/c5692c65d25c/">https://blog.onestravel.cn/20181207/c5692c65d25c/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20181208/5a7806e57e9b/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">(三)Kotlin 高阶函数 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20181206/0151de5b59e5/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">(一)Kotlin 基础语法 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">一、面向对象的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E4%B8%8E%E6%8E%A5%E5%8F%A3"><span class="toc-text">二、抽象类与接口</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%8E%A5%E5%8F%A3"><span class="toc-text">1、接口</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB"><span class="toc-text">2、抽象类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E5%92%8C%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%85%B1%E6%80%A7"><span class="toc-text">3、抽象类和接口的共性</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E5%92%8C%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">3、抽象类和接口的区别</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">三、类的继承与接口的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E4%BB%A3%E7%90%86"><span class="toc-text">接口代理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E6%96%B9%E6%B3%95%E5%86%B2%E7%AA%81"><span class="toc-text">接口方法冲突</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%B1%BB%E5%8F%8A%E5%85%B6%E6%88%90%E5%91%98%E7%9A%84%E5%8F%AF%E8%A7%81%E6%80%A7"><span class="toc-text">四、类及其成员的可见性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94%E3%80%81object"><span class="toc-text">五、object</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%BC%B4%E7%94%9F%E5%AF%B9%E8%B1%A1%E4%B8%8E%E9%9D%99%E6%80%81%E6%88%90%E5%91%98"><span class="toc-text">六、伴生对象与静态成员</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%96%B9%E6%B3%95%E9%87%8D%E8%BD%BD-Overloads-%E5%92%8C%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">七、方法重载(Overloads)和默认参数</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%87%8D%E8%BD%BD"><span class="toc-text">重载</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">默认参数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E9%87%8D%E8%BD%BD%E4%B8%8E%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">方法重载与默认参数</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%89%A9%E5%B1%95%E6%88%90%E5%91%98%EF%BC%88%E4%BA%8C%E6%AC%A1%E5%8A%A0%E5%B7%A5%EF%BC%89"><span class="toc-text">八、扩展成员（二次加工）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E5%B1%9E%E6%80%A7%E4%BB%A3%E7%90%86"><span class="toc-text">九、属性代理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E6%95%B0%E6%8D%AE%E7%B1%BB%EF%BC%88data-class%EF%BC%89"><span class="toc-text">十、数据类（data class）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E5%86%85%E9%83%A8%E7%B1%BB"><span class="toc-text">十一、内部类</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8C%BF%E5%90%8D%E5%86%85%E9%83%A8%E7%B1%BB"><span class="toc-text">匿名内部类</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E6%9E%9A%E4%B8%BE%E7%B1%BB"><span class="toc-text">十二、枚举类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E5%AF%86%E5%B0%81%E7%B1%BB%EF%BC%88sealed-class%EF%BC%89"><span class="toc-text">十二、密封类（sealed class）</span></a></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">一、面向对象的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E4%B8%8E%E6%8E%A5%E5%8F%A3"><span class="toc-text">二、抽象类与接口</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%8E%A5%E5%8F%A3"><span class="toc-text">1、接口</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB"><span class="toc-text">2、抽象类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E5%92%8C%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%85%B1%E6%80%A7"><span class="toc-text">3、抽象类和接口的共性</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E5%92%8C%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">3、抽象类和接口的区别</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">三、类的继承与接口的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E4%BB%A3%E7%90%86"><span class="toc-text">接口代理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E6%96%B9%E6%B3%95%E5%86%B2%E7%AA%81"><span class="toc-text">接口方法冲突</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%B1%BB%E5%8F%8A%E5%85%B6%E6%88%90%E5%91%98%E7%9A%84%E5%8F%AF%E8%A7%81%E6%80%A7"><span class="toc-text">四、类及其成员的可见性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94%E3%80%81object"><span class="toc-text">五、object</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%BC%B4%E7%94%9F%E5%AF%B9%E8%B1%A1%E4%B8%8E%E9%9D%99%E6%80%81%E6%88%90%E5%91%98"><span class="toc-text">六、伴生对象与静态成员</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%96%B9%E6%B3%95%E9%87%8D%E8%BD%BD-Overloads-%E5%92%8C%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">七、方法重载(Overloads)和默认参数</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%87%8D%E8%BD%BD"><span class="toc-text">重载</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">默认参数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E9%87%8D%E8%BD%BD%E4%B8%8E%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">方法重载与默认参数</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%89%A9%E5%B1%95%E6%88%90%E5%91%98%EF%BC%88%E4%BA%8C%E6%AC%A1%E5%8A%A0%E5%B7%A5%EF%BC%89"><span class="toc-text">八、扩展成员（二次加工）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E5%B1%9E%E6%80%A7%E4%BB%A3%E7%90%86"><span class="toc-text">九、属性代理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E6%95%B0%E6%8D%AE%E7%B1%BB%EF%BC%88data-class%EF%BC%89"><span class="toc-text">十、数据类（data class）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E5%86%85%E9%83%A8%E7%B1%BB"><span class="toc-text">十一、内部类</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8C%BF%E5%90%8D%E5%86%85%E9%83%A8%E7%B1%BB"><span class="toc-text">匿名内部类</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E6%9E%9A%E4%B8%BE%E7%B1%BB"><span class="toc-text">十二、枚举类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E5%AF%86%E5%B0%81%E7%B1%BB%EF%BC%88sealed-class%EF%BC%89"><span class="toc-text">十二、密封类（sealed class）</span></a></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">一、面向对象的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E4%B8%8E%E6%8E%A5%E5%8F%A3"><span class="toc-text">二、抽象类与接口</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%8E%A5%E5%8F%A3"><span class="toc-text">1、接口</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB"><span class="toc-text">2、抽象类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E5%92%8C%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%85%B1%E6%80%A7"><span class="toc-text">3、抽象类和接口的共性</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E6%8A%BD%E8%B1%A1%E7%B1%BB%E5%92%8C%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">3、抽象类和接口的区别</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF%E4%B8%8E%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">三、类的继承与接口的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E4%BB%A3%E7%90%86"><span class="toc-text">接口代理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E6%96%B9%E6%B3%95%E5%86%B2%E7%AA%81"><span class="toc-text">接口方法冲突</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%B1%BB%E5%8F%8A%E5%85%B6%E6%88%90%E5%91%98%E7%9A%84%E5%8F%AF%E8%A7%81%E6%80%A7"><span class="toc-text">四、类及其成员的可见性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94%E3%80%81object"><span class="toc-text">五、object</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%BC%B4%E7%94%9F%E5%AF%B9%E8%B1%A1%E4%B8%8E%E9%9D%99%E6%80%81%E6%88%90%E5%91%98"><span class="toc-text">六、伴生对象与静态成员</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%96%B9%E6%B3%95%E9%87%8D%E8%BD%BD-Overloads-%E5%92%8C%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">七、方法重载(Overloads)和默认参数</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%87%8D%E8%BD%BD"><span class="toc-text">重载</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">默认参数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E9%87%8D%E8%BD%BD%E4%B8%8E%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">方法重载与默认参数</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%89%A9%E5%B1%95%E6%88%90%E5%91%98%EF%BC%88%E4%BA%8C%E6%AC%A1%E5%8A%A0%E5%B7%A5%EF%BC%89"><span class="toc-text">八、扩展成员（二次加工）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E5%B1%9E%E6%80%A7%E4%BB%A3%E7%90%86"><span class="toc-text">九、属性代理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E6%95%B0%E6%8D%AE%E7%B1%BB%EF%BC%88data-class%EF%BC%89"><span class="toc-text">十、数据类（data class）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E5%86%85%E9%83%A8%E7%B1%BB"><span class="toc-text">十一、内部类</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8C%BF%E5%90%8D%E5%86%85%E9%83%A8%E7%B1%BB"><span class="toc-text">匿名内部类</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E6%9E%9A%E4%B8%BE%E7%B1%BB"><span class="toc-text">十二、枚举类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E5%AF%86%E5%B0%81%E7%B1%BB%EF%BC%88sealed-class%EF%BC%89"><span class="toc-text">十二、密封类（sealed class）</span></a></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

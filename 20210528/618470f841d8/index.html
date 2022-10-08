@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>【笔记三】字节码层面分析 class 文件结构</title>
+  
+  
+  <meta property="og:title" content="【笔记三】字节码层面分析 class 文件结构">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20210528/618470f841d8/index.html">
+  
+  
+  <meta property="og:img" content="/medias/avatar.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-05-28">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="JVM">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      【笔记三】字节码层面分析 class 文件结构
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-05-28T14:31:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-05-28</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/Android/" class="post-meta-link">Android</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>4.6k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/JVM/" class="post-meta-link">JVM</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="【笔记三】字节码层面分析-class-文件结构"><a href="#【笔记三】字节码层面分析-class-文件结构" class="headerlink" title="【笔记三】字节码层面分析 class 文件结构"></a>【笔记三】字节码层面分析 class 文件结构</h1><h2 id="1-class-的来龙去脉"><a href="#1-class-的来龙去脉" class="headerlink" title="1. class 的来龙去脉"></a>1. class 的来龙去脉</h2><p>Java 能够实现“一次编译，到处运行”，这其中 class 文件要占大部分功劳；为了让 Java 具有良好的跨平台能力，Java 独具匠心的提供了一种可以在所有平台上都能使用的一种中间代码—<strong>字节码类文件（.class 类文件）</strong>。有了字节码，无论哪种平台（如：Mac，Linux，windows等），只要是安装了虚拟机，都可以直接运行字节码文件。</p>
+<p>并且，<strong>有了字节码，也解除了 Java 虚拟机和 Java 语言之间的耦合</strong>。其实，Java 虚拟机当时被设计出来的目的就不单单是值运行 Java 这一种语言。目前，Java 虚拟机已经可以支持很多除 Java 语言外的其他语言；如：Groovy、JRuby、Jython、Scala 等。之所以能勾支持其他语言，是因为这些语言经过编译之后也可以生成能够被 Java 虚拟机解释并执行的字节码文件。而虚拟机并不关心字节码文件是由哪种语言编译而来的。</p>
+<img src="/images/android:jvm/java_xnj_classpng.png" alt="img" style="zoom:67%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/java_xnj_classpng.png" class="lozad post-image">
+
+<h2 id="2-上帝视角看-class-文件"><a href="#2-上帝视角看-class-文件" class="headerlink" title="2. 上帝视角看 class 文件"></a>2. 上帝视角看 class 文件</h2><p>如果从纵观角度来看 class 文件，class 文件里只有两种数据结构：<strong>无符号数</strong>和<strong>表</strong>。</p>
+<ul>
+<li><strong>无符号数</strong>：数据基本的数据类型，由 u1、u2、u4、u8 分别来代表一个字节、两个字节、四个字节 和 八个字节的无符号数，无符号数可以用来描述数字，索引引用，数值量或者字符串（UTF 编码）。</li>
+<li><strong>表</strong>：表是由多个无符号数或者其他表作为数据项构成的复合数据类型，<strong>class 文件种所有的表都以“_iinfo”结尾</strong>。其实，整个 Class 文件本质上就是一张表。</li>
+</ul>
+<img src="/images/android:jvm/class_biao_uint.png" alt="无符号数和表" style="zoom:99%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_biao_uint.png" class="lozad post-image">
+
+<p>可以看出，在一张表中可以包含其他无符号数和其他表格。伪代码可以如下所示：</p>
+<pre class=" language-java"><code class="language-java"><span class="token comment" spellcheck="true">//无符号数</span>
+u1 <span class="token operator">=</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+u2 <span class="token operator">=</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+u4 <span class="token operator">=</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+u8 <span class="token operator">=</span> <span class="token keyword">byte</span><span class="token punctuation">[</span><span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">//表</span>
+class_table<span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">//表中可以引用各种无符号数</span>
+  u1 tag<span class="token punctuation">;</span>
+  u2 index2<span class="token punctuation">;</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+  <span class="token comment" spellcheck="true">//表中也可以引用其他表</span>
+  method_table mt<span class="token punctuation">;</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">}</span></code></pre>
+<h2 id="3-class-文件结构"><a href="#3-class-文件结构" class="headerlink" title="3. class 文件结构"></a>3. class 文件结构</h2><p>刚才说 class 文件中只存在无符号数和表这两种数据结构。而这些无符号数和表就组成了 class 中的各个结构。这些结构按照预先约定好的顺序紧密的从前向后排列，相邻项之间没有任何间隙。如下图所示：</p>
+<p><img src="/images/android:jvm/class_jiegou.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_jiegou.png" class="lozad post-image"></p>
+<p>当 JVM 加载某个class 文件时，JVM 就是根据上图中的结构去解析 class 文件，加载 class 文件到内存中，并在内存中分配相应的空间。具体一种结构需要占用多大控件可以参考下表：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>名称</th>
+<th>数据类型</th>
+<th>数量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>magic number</td>
+<td>魔数</td>
+<td>u4</td>
+<td>1</td>
+</tr>
+<tr>
+<td>major version</td>
+<td>主版本号</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>minor version</td>
+<td>副版本号</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>constant_pool_count</td>
+<td>常量池大小</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>constant_pool</td>
+<td>常量池</td>
+<td>cp_info</td>
+<td>constant_pool_count - 1</td>
+</tr>
+<tr>
+<td>access_flag</td>
+<td>访问标志</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>this_class</td>
+<td>当前类索引</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>super_class</td>
+<td>父类索引</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>interfaces_count</td>
+<td>接口索引集合大小</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>interfaces</td>
+<td>接口索引集合</td>
+<td>u2</td>
+<td>interfaces_count - 1</td>
+</tr>
+<tr>
+<td>fields_count</td>
+<td>字段索引集合大小</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>fields</td>
+<td>字段索引集合</td>
+<td>field_info</td>
+<td>fields_count - 1</td>
+</tr>
+<tr>
+<td>methods_count</td>
+<td>方法索引集合大小</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>methods</td>
+<td>方法索引集合</td>
+<td>method_info</td>
+<td>methods_count - 1</td>
+</tr>
+<tr>
+<td>attributes_count</td>
+<td>属性索引集合大小</td>
+<td>u2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>attributes</td>
+<td>属性索引集合</td>
+<td>attribute_info</td>
+<td>attributes_count - 1</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>看到这里你可能会有点概念混淆，分不清无符号数、表格以及上面的结构是什么关系。其实可以举一个简单的例子：人类的身体是由 H、O、C、N 等元素组成的。但是这些元素又是按照一定的规律组成了人类身体的各个器官。class 文件中的无符号数和表格就相当于人类身体中的 H、O、C、N 等元素，而 class 结构图中的各项结构就相当于人类身体的各个器官。</p>
+</blockquote>
+<h2 id="4-实例分析"><a href="#4-实例分析" class="headerlink" title="4. 实例分析"></a>4. 实例分析</h2><p>接下来通过一个 Java 代码来看一下上面几个结构的详细情况。</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">import</span> java<span class="token punctuation">.</span>io<span class="token punctuation">.</span>Serializable<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Test</span> <span class="token keyword">implements</span> <span class="token class-name">Serializable</span><span class="token punctuation">,</span> Cloneable<span class="token punctuation">{</span>
+      <span class="token keyword">private</span> <span class="token keyword">int</span> num <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">int</span> j <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+          num <span class="token operator">=</span> num <span class="token operator">+</span> i<span class="token punctuation">;</span>
+          <span class="token keyword">return</span> num<span class="token punctuation">;</span>
+     <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>将 Test.java 通过 javac 进行编译，生成Test.class 字节码文件，然后使用16进制编辑器打开 class 文件，显示内容如下：</p>
+<p><img src="/images/android:jvm/class_info_0x.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_0x.png" class="lozad post-image"></p>
+<p>上面都是一些 16 进制数字，每两个字符代表一个字节。乍看一下各个字符之间毫无规律，但是在 JVM 的视角里这些 16 进制字符是按照严格的规律排列的。接下来就一步一步看下 JVM 是如何解析它们的。</p>
+<h3 id="4-1-魔数-magic-number"><a href="#4-1-魔数-magic-number" class="headerlink" title="4.1 魔数 magic number"></a>4.1 魔数 magic number</h3><p><img src="/images/android:jvm/class_magic_num.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_magic_num.png" class="lozad post-image"></p>
+<p>如上图所示，在 class 文件开头的四个字节是 class 文件的魔数，它是一个固定的值–0XCAFEBABE。魔数是 class 文件的标志，也就是说它是判断一个文件是不是 class 格式文件的标准， 如果开头四个字节不是 0XCAFEBABE， 那么就说明它不是 class 文件， 不能被 JVM 识别或加载。</p>
+<h3 id="4-2-版本号"><a href="#4-2-版本号" class="headerlink" title="4.2 版本号"></a>4.2 版本号</h3><p><img src="/images/android:jvm/class_info_version.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_version.png" class="lozad post-image"></p>
+<p>紧跟在魔数后面的四个字节代表当前 class 文件的版本号。前两个字节 0000 代表次版本号（minor_version），后两个字节 0034 是主版本号（major_version），对应的十进制值为 52，也就是说当前 class 文件的主版本号为 52，次版本号为 0。所以综合版本号是 52.0，也就是  jdk1.8.0</p>
+<h3 id="4-3-常量池"><a href="#4-3-常量池" class="headerlink" title="4.3 常量池"></a>4.3 常量池</h3><p>紧跟在版本号之后的是一个叫作常量池的表（cp_info）。在常量池中保存了类的各种相关信息，比如类的名称、父类的名称、类中的方法名、参数名称、参数类型等，这些信息都是以各种表的形式保存在常量池中的。</p>
+<p>常量池中的每一项都是一个表，其项目类型共有 14 种，如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th>表名</th>
+<th>标识位</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CONSTANT_utf8_info</td>
+<td>1</td>
+<td>UTF-8编码字符串表</td>
+</tr>
+<tr>
+<td>CONSTANT_Integer_info</td>
+<td>3</td>
+<td>整型常量表</td>
+</tr>
+<tr>
+<td>CONSTANT_Float_info</td>
+<td>4</td>
+<td>浮点型常量表</td>
+</tr>
+<tr>
+<td>CONSTANT_Long_info</td>
+<td>5</td>
+<td>长整型常量表</td>
+</tr>
+<tr>
+<td>CONSTANT_Double_info</td>
+<td>6</td>
+<td>双精度浮点型常量表</td>
+</tr>
+<tr>
+<td>CONSTANT_Class_info</td>
+<td>7</td>
+<td>接口/类 引用表</td>
+</tr>
+<tr>
+<td>CONSTANT_String_info</td>
+<td>8</td>
+<td>字符串常量表</td>
+</tr>
+<tr>
+<td>CONSTANT_Fieldref_info</td>
+<td>9</td>
+<td>字段引用表</td>
+</tr>
+<tr>
+<td>CONSTANT_Methodref_info</td>
+<td>10</td>
+<td>类的方法引用表</td>
+</tr>
+<tr>
+<td>CONSTANT_InterfaceMethod_info</td>
+<td>11</td>
+<td>接口方的法引用表</td>
+</tr>
+<tr>
+<td>CONSTANT_NameAndType</td>
+<td>12</td>
+<td>字段或者方法的名称和类型表</td>
+</tr>
+<tr>
+<td>CONSTANT_MethodHandle_info</td>
+<td>15</td>
+<td>方法句柄表</td>
+</tr>
+<tr>
+<td>CONSTANT_MethodType_info</td>
+<td>16</td>
+<td>方法类型表</td>
+</tr>
+<tr>
+<td>CONSTANT_InvokeDynamic_info</td>
+<td>18</td>
+<td>动态方法调用表</td>
+</tr>
+</tbody></table>
+<p>可以看出，常量池中的每一项都会有一个 u1大小的 tag 。tag 值是表的标识，JVM 解析 class 文件时，通过这个数据来判断当前数据结构是哪一种表。以上14 中表都有自己的结构，这里以 <code>CONSTANT_Class_info</code>和<code>CONSTANT_Utf8_info</code>这两张表举例说明：</p>
+<p>首先，<code>CONSTANT_Class_info</code>表具体结构如下所示：</p>
+<pre class=" language-java"><code class="language-java">table CONSTANT_Class_info <span class="token punctuation">{</span>
+    u1  tag <span class="token operator">=</span> <span class="token number">7</span><span class="token punctuation">;</span>
+    u2  name_index<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>解释说明：</p>
+<ul>
+<li>tag：占用一个字节大小。比如值为 7，说明是 CONSTANT_Class_info 类型表。</li>
+<li>name_index：是一个索引值，可以将它理解为一个指针，指向常量池中索引为 name_index 的常量表。比如 name_index = 2，则它指向常量池中第 2 个常量。</li>
+</ul>
+<p>接下来再看 CONSTANT_Utf8_info 表具体结构如下：</p>
+<pre><code>table CONSTANT_utf8_info &#123;
+    u1  tag;
+    u2  length;
+    u1[] bytes;
+&#125;</code></pre><p>解释说明：</p>
+<ul>
+<li>tag：值为1，表示是 CONSTANT_Utf8_info 类型表。</li>
+<li>length：length 表示 u1[] 的长度，比如 length=5，则表示接下来的数据是 5 个连续的 u1 类型数据。</li>
+<li>bytes：u1 类型数组，长度为上面第 2 个参数 length 的值。</li>
+</ul>
+<p>而我们在java代码中声明的String字符串最终在class文件中的存储格式就 CONSTANT_utf8_info。因此一个字符串最大长度也就是u2所能代表的最大值65536个，但是需要使用2个字节来保存 null 值，因此一个字符串的最大长度为 65536 - 2 = 65534。</p>
+<p>不难看出，在常量池内部的表中也有相互之间的引用。用一张图来理解 CONSTANT_Class_info 和 CONSTANT_utf8_info 表格之间的关系，如下图所示：</p>
+<p><img src="/images/android:jvm/class_info_constant.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_constant.png" class="lozad post-image"></p>
+<p>理解了常量池内部的数据结构之后，接下来就看一下实例代码的解析过程。因为开发者平时定义的 Java 类各式各样，类中的方法与参数也不尽相同。所以常量池的元素数量也就无法固定，因此 class 文件在常量池的前面使用 2 个字节的容量计数器，用来代表当前类中常量池的大小。如下图所示：</p>
+<p><img src="/images/android:jvm/class_info_constant_count.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_constant_count.png" class="lozad post-image"></p>
+<p>红色框中的 001d 转化为十进制就是 29，也就是说常量计数器的值为 29。其中下标为 0 的常量被 JVM 留作其他特殊用途，因此 Test.class 中实际的常量池大小为这个计数器的值减 1，也就是 28个。</p>
+<p>第一个常量，如下所示：</p>
+<p><img src="/images/android:jvm/class_info_constant_1.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_constant_1.png" class="lozad post-image"></p>
+<p>0a 转化为 10 进制后为 10，通过查看常量池 14 种表格图中，可以查到 tag=10 的表类型为 CONSTANT_Methodref_info，因此常量池中的第一个常量类型为方法引用表。其结构如下：</p>
+<pre><code>CONSTANT_Methodref_info &#123;
+    u1 tag = 10;
+    u2 class_index;        指向此方法的所属类
+    u2 name_type_index;    指向此方法的名称和类型
+
+&#125;</code></pre><p>也就是说在“0a”之后的 2 个字节指向这个方法是属于哪个类，紧接的 2 个字节指向这个方法的名称和类型。它们的值分别是：</p>
+<ul>
+<li>0006：十进制 6，表示指向常量池中的第 6 个常量。</li>
+<li>0015：十进制 21，表示指向常量池中的第 21 个常量。</li>
+</ul>
+<p>至此，第 1 个常量就解读完毕了。紧接着的就是第 2 个常量，如下所示：</p>
+<p><img src="/images/android:jvm/class_info_constant_2.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_constant_2.png" class="lozad post-image"></p>
+<p>tag 09 表示是字段引用表 CONSTANT_FIeldref_info ，其结构如下：</p>
+<pre><code>CONSTANT_Fieldref_info&#123;
+    u1 tag;
+    u2 class_index;        指向此字段的所属类
+    u2 name_type_index;    指向此字段的名称和类型
+
+&#125;</code></pre><p>同样也是 4 个字节，前后都是两个索引。</p>
+<ul>
+<li>0005：指向常量池中第 5 个常量。</li>
+<li>0016：指向常量池中第 22 个常量。</li>
+</ul>
+<p>到现在为止我们已经解析出了常量池中的两个常量。剩下的 21 个常量的解析过程也大同小异，这里就不一一解析了。</p>
+<p>实际上我们可以借助 javap 命令来帮助我们查看 class 常量池中的内容：</p>
+<pre class=" language-shell"><code class="language-shell">javap -v Test.class</code></pre>
+<p>上述命令执行后，显示结果如下：</p>
+<p><img src="/images/android:jvm/class_info_javap.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_javap.png" class="lozad post-image"></p>
+<p>正如我们刚才分析的一样，常量池中第一个常量是 Methodref 类型，指向下标 6 和下标 21 的常量。其中下标 21 的常量类型为 NameAndType，它对应的数据结构如下：</p>
+<pre><code>CONSTANT_NameAndType_info&#123;
+    u1 tag;
+    u2 name_index;    指向某字段或方法的名称字符串
+    u2 type_index;    指向某字段或方法的类型字符串
+
+&#125;</code></pre><p>而下标在 21 的 NameAndType 的 name_index 和 type_index 分别指向了 13 和 14，也就是“<init>”和“()V”。因此最终解析下来常量池中第 1 个常量的解析过程以及最终值如下图所示：</p>
+<p><img src="/images/android:jvm/class_info_constant_pool.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_constant_pool.png" class="lozad post-image"></p>
+<p>仔细解析层层引用，最后我们可以看出，Test.class 文件中常量池的第 1 个常量保存的是 Object 中的默认构造器方法。</p>
+<h3 id="4-4-访问标志（access-flags）"><a href="#4-4-访问标志（access-flags）" class="headerlink" title="4.4 访问标志（access_flags）"></a>4.4 访问标志（access_flags）</h3><p>紧跟在常量池之后的常量是访问标志，占用两个字节，如下图所示：</p>
+<p><img src="/images/android:jvm/class_info_access_flags.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_access_flags.png" class="lozad post-image"></p>
+<p>访问标志代表类或者接口的访问信息，比如：该 class 文件是类还是接口，是否被定义成 public，是否是 abstract，如果是类，是否被声明成 final 等等。各种访问标志如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>访问标志</th>
+<th>值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ACC_PUBLIC</td>
+<td>0x0001</td>
+<td>public 类型</td>
+</tr>
+<tr>
+<td>ACC_FINAL</td>
+<td>0x0010</td>
+<td>被声明为 final 类型的类</td>
+</tr>
+<tr>
+<td>ACC_SUPER</td>
+<td>0x0020</td>
+<td>是否允许使用invokespecial字节码指令的新语义，<br />JDK 1.0.2之后编译出来的类这个标志默认为真</td>
+</tr>
+<tr>
+<td>ACC_INTERFACE</td>
+<td>0x0200</td>
+<td>标识这是一个接口类型</td>
+</tr>
+<tr>
+<td>ACC_ABSTRACT</td>
+<td>0x0400</td>
+<td>标识这是一个抽象类或是接口类型</td>
+</tr>
+<tr>
+<td>ACC_ANNOTATION</td>
+<td>0x2000</td>
+<td>标识这是一个注解</td>
+</tr>
+<tr>
+<td>ACC_ENUM</td>
+<td>0x4000</td>
+<td>标识这是一个枚举</td>
+</tr>
+</tbody></table>
+<p>我们定义的 Test.java 是一个普通 Java 类，不是接口、枚举或注解。并且被 public 修饰但没有被声明为 final 和 abstract，因此它所对应的 access_flags 为 0021（0X0001 和 0X0020 相结合）。</p>
+<h3 id="4-5-类索引、父类索引与接口索引计数器"><a href="#4-5-类索引、父类索引与接口索引计数器" class="headerlink" title="4.5 类索引、父类索引与接口索引计数器"></a>4.5 类索引、父类索引与接口索引计数器</h3><p>在访问标志后的 2 个字节就是类索引，类索引后的 2 个字节就是父类索引，父类索引后的 2 个字节则是接口索引计数器。如下图所示：</p>
+<p><img src="/images/android:jvm/class_info_class_index.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_class_index.png" class="lozad post-image"></p>
+<p>可以看出类索引指向常量池中的第 5 个常量，父类索引指向常量池中的第 6 个常量，并且实现的接口个数为 2 个。再回顾下常量池中的数据：</p>
+<p><img src="/images/android:jvm/class_info_class_constant.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_class_constant.png" class="lozad post-image"></p>
+<p>从图中可以看出，第 5 个常量和第 6 个常量均为 CONSTANT_Class_info 表类型，并且代表的类分别是“Test”和“Object”。再看接口计数器，因为接口计数器的值是 2，代表这个类实现了 2 个接口。查看在接口计数器之后的 4 个字节分别为：</p>
+<ul>
+<li>0007：指向常量池中的第 7 个常量，从图中可以看出第 7 个常量值为”Serializable”。</li>
+<li>0008：指向常量池中的第 8 个常量，从图中可以看出第 8 个常量值为”Cloneable”。</li>
+</ul>
+<p>综上所述，可以得出如下结论：当前类为 Test 继承自 Object 类，并实现了“Serializable”和“Cloneable”这两个接口。</p>
+<h3 id="4-6-字段表"><a href="#4-6-字段表" class="headerlink" title="4.6 字段表"></a>4.6 字段表</h3><p>紧跟在接口索引集合后面的就是字段表了，字段表的主要功能是用来描述类或者接口中声明的变量。这里的字段包含了类级别变量以及实例变量，但是不包括方法内部声明的局部变量。</p>
+<p>同样, 一个类中的变量个数是不固定的，因此在字段表集合之前还是使用一个计数器来表示变量的个数，如下所示：</p>
+<p><img src="/images/android:jvm/class_info_fieldref_count.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_fieldref_count.png" class="lozad post-image"></p>
+<p>0002 表示类中声明了 2 个变量（在 class 文件中叫字段），字段计数器之后会紧跟着 2 个字段表的数据结构。</p>
+<p>字段表的具体结构如下：</p>
+<pre><code>CONSTANT_Fieldref_info&#123;
+    u2  access_flags    字段的访问标志
+    u2  name_index          字段的名称索引(也就是变量名)
+    u2  descriptor_index    字段的描述索引(也就是变量的类型)
+    u2  attributes_count    属性计数器
+    attribute_info
+&#125;</code></pre><p>继续解析 Text.class 中的字段表，其结构如下图所示：</p>
+<p><img src="/images/android:jvm/class_info_fields.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_fields.png" class="lozad post-image"></p>
+<h3 id="4-7-字段访问标志"><a href="#4-7-字段访问标志" class="headerlink" title="4.7 字段访问标志"></a>4.7 字段访问标志</h3><p>对于 Java 类中的变量，也可以使用 public、private、final、static 等标识符进行标识。因此解析字段时，需要先判断它的访问标志，字段的访问标志如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字段访问标志</th>
+<th>值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ACC_PUBLIC</td>
+<td>0x0001</td>
+<td>字段是否为 public</td>
+</tr>
+<tr>
+<td>ACC_PRIVATE</td>
+<td>0x0002</td>
+<td>字段是否为 private</td>
+</tr>
+<tr>
+<td>ACC_PROTECTED</td>
+<td>0x0004</td>
+<td>字段是否为 protected</td>
+</tr>
+<tr>
+<td>ACC_STATIC</td>
+<td>0x0008</td>
+<td>字段是否为静态static</td>
+</tr>
+<tr>
+<td>ACC_FINAL</td>
+<td>0x0010</td>
+<td>字段是否为 final</td>
+</tr>
+<tr>
+<td>ACC_VOLATILE</td>
+<td>0x0040</td>
+<td>字段是否为 volatile</td>
+</tr>
+<tr>
+<td>ACC_TRANSIENT</td>
+<td>0x0080</td>
+<td>字段是否为 transient</td>
+</tr>
+<tr>
+<td>ACC_ENUM</td>
+<td>0x4000</td>
+<td>字段是否为 enum</td>
+</tr>
+</tbody></table>
+<p>字段表结构图中的访问标志的值为 0002，代表它是 private 类型。变量名索引指向常量池中的第 9 个常量，变量名类型索引指向常量池中第 10 个常量。第 9 和第 10 个常量分别为“num”和“I”，如下所示：</p>
+<p><img src="/images/android:jvm/class_info_field_acc_flag.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_field_acc_flag.png" class="lozad post-image"></p>
+<p>因此可以得知类中有一个名为 num，类型为 int 类型的变量。对于第 2 个变量的解析过程也是一样，就不再过多介绍。</p>
+<p>注意事项：</p>
+<ul>
+<li>字段表集合中不会列出从父类或者父接口中继承而来的字段。</li>
+<li>内部类中为了保持对外部类的访问性，会自动添加指向外部类实例的字段。</li>
+</ul>
+<p>对于以上两种情况，可以自行定义一个类查看并手动分析一下。</p>
+<h3 id="4-8-方法表"><a href="#4-8-方法表" class="headerlink" title="4.8 方法表"></a>4.8 方法表</h3><p>字段表之后跟着的就是方法表常量。相信你应该也能猜到了，方法表常量应该也是以一个计数器开始的，因为一个类中的方法数量是不固定的，如图所示：</p>
+<p><img src="/images/android:jvm/class_info_method_count.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_method_count.png" class="lozad post-image"></p>
+<p>上图表示 Test.class 中有两个方法，但是我们只在 Test.java 中声明了一个 add 方法，这是为什么呢？这是因为默认构造器方法也被包含在方法表常量中。</p>
+<p>方法表的结构如下所示：</p>
+<pre><code>CONSTANT_Methodref_info&#123;
+    u2  access_flags;        方法的访问标志
+    u2  name_index;          指向方法名的索引
+    u2  descriptor_index;    指向方法类型的索引
+    u2  attributes_count;    方法属性计数器
+    attribute_info attributes;
+&#125;</code></pre><p>可以看到，方法也是有自己的访问标志，具体如下：</p>
+<table>
+<thead>
+<tr>
+<th>访问标志</th>
+<th>值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ACC_PUBLIC</td>
+<td>0x0001</td>
+<td>方法是否为 public</td>
+</tr>
+<tr>
+<td>ACC_PRIVATE</td>
+<td>0x0002</td>
+<td>方法是否为 private</td>
+</tr>
+<tr>
+<td>ACC_PROTECTED</td>
+<td>0x0004</td>
+<td>方法是否为 protected</td>
+</tr>
+<tr>
+<td>ACC_STATIC</td>
+<td>0x0008</td>
+<td>方法是否为 static</td>
+</tr>
+<tr>
+<td>ACC_FINAL</td>
+<td>0x0010</td>
+<td>放发是否为 final</td>
+</tr>
+<tr>
+<td>ACC_SYNCHRONIZED</td>
+<td>0x0020</td>
+<td>方法是否被 synchronized 修饰</td>
+</tr>
+<tr>
+<td>ACC_VARAGAS</td>
+<td>0x0080</td>
+<td>方法是否可以接收参数</td>
+</tr>
+<tr>
+<td>ACC_NATIVE</td>
+<td>0x0100</td>
+<td>方法是否为 native</td>
+</tr>
+<tr>
+<td>ACC_ABSTRACT</td>
+<td>0X0400</td>
+<td>方法是否为 abstract</td>
+</tr>
+</tbody></table>
+<p>可以看到，方法也是有自己的访问标志，具体如下：</p>
+<p><img src="/images/android:jvm/class_info_method_add.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_method_add.png" class="lozad post-image"></p>
+<p>从图中我们可以看出 add 方法的以下字段的具体值：</p>
+<ul>
+<li>access_flags = 0x0001 也就是访问权限为 public。</li>
+<li>name_index = 0x0011  指向常量池中的第 17 个常量，也就是“add”。</li>
+<li>type_index = 0x0012   指向常量池中的第 18 个常量，也即是 (I)。这个方法接收 int 类型参数，并返回 int 类型参数。</li>
+</ul>
+<h3 id="4-9-属性表"><a href="#4-9-属性表" class="headerlink" title="4.9 属性表"></a>4.9 属性表</h3><p>在之前解析字段和方法的时候，在它们的具体结构中我们都能看到有一个叫作 attributes_info 的表，这就是属性表。</p>
+<p>属性表并没有一个固定的结构，各种不同的属性只要满足以下结构即可：</p>
+<pre><code>CONSTANT_Attribute_info&#123;
+    u2 name_index;
+    u2 attribute_length length;
+    u1[] info;
+&#125;</code></pre><p>JVM 中预定义了很多属性表，这里重点讲一下 Code 属性表。</p>
+<ul>
+<li>Code属性表</li>
+</ul>
+<p>我们可以接着刚才解析方法表的思路继续往下分析：</p>
+<p><img src="/images/android:jvm/class_info_attribute_count.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_attribute_count.png" class="lozad post-image"></p>
+<p>可以看到，在方法类型索引之后跟着的就是“add”方法的属性。0X0001 是属性计数器，代表只有一个属性。0X000f 是属性表类型索引，通过查看常量池可以看出它是一个 Code 属性表，如下所示：</p>
+<p><img src="/images/android:jvm/class_info_attribute_code.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_attribute_code.png" class="lozad post-image"></p>
+<p>Code 属性表中，最主要的就是一些列的字节码。通过 javap -v Test.class 之后，可以看到方法的字节码，如下图显示的是 add 方法的字节码指令：</p>
+<p><img src="/images/android:jvm/class_info_add_class.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/class_info_add_class.png" class="lozad post-image"></p>
+<p>JVM 执行 add 方法时，就通过这一系列指令来做相应的操作。</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20210528/618470f841d8/">https://blog.onestravel.cn/20210528/618470f841d8/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20210728/9c2efe6aefcb/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">【笔记四】编译插桩操纵字节码，实现不可能完成的任务 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20210328/68b72d473df5/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">【笔记二】GC 回收机制和分代回收策略 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91%E5%AD%97%E8%8A%82%E7%A0%81%E5%B1%82%E9%9D%A2%E5%88%86%E6%9E%90-class-%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">【笔记三】字节码层面分析 class 文件结构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-class-%E7%9A%84%E6%9D%A5%E9%BE%99%E5%8E%BB%E8%84%89"><span class="toc-text">1. class 的来龙去脉</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%8A%E5%B8%9D%E8%A7%86%E8%A7%92%E7%9C%8B-class-%E6%96%87%E4%BB%B6"><span class="toc-text">2. 上帝视角看 class 文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-class-%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">3. class 文件结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text">4. 实例分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E9%AD%94%E6%95%B0-magic-number"><span class="toc-text">4.1 魔数 magic number</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E7%89%88%E6%9C%AC%E5%8F%B7"><span class="toc-text">4.2 版本号</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="toc-text">4.3 常量池</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E8%AE%BF%E9%97%AE%E6%A0%87%E5%BF%97%EF%BC%88access-flags%EF%BC%89"><span class="toc-text">4.4 访问标志（access_flags）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E7%B1%BB%E7%B4%A2%E5%BC%95%E3%80%81%E7%88%B6%E7%B1%BB%E7%B4%A2%E5%BC%95%E4%B8%8E%E6%8E%A5%E5%8F%A3%E7%B4%A2%E5%BC%95%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="toc-text">4.5 类索引、父类索引与接口索引计数器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-6-%E5%AD%97%E6%AE%B5%E8%A1%A8"><span class="toc-text">4.6 字段表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-7-%E5%AD%97%E6%AE%B5%E8%AE%BF%E9%97%AE%E6%A0%87%E5%BF%97"><span class="toc-text">4.7 字段访问标志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-8-%E6%96%B9%E6%B3%95%E8%A1%A8"><span class="toc-text">4.8 方法表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-9-%E5%B1%9E%E6%80%A7%E8%A1%A8"><span class="toc-text">4.9 属性表</span></a></li></ol></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91%E5%AD%97%E8%8A%82%E7%A0%81%E5%B1%82%E9%9D%A2%E5%88%86%E6%9E%90-class-%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">【笔记三】字节码层面分析 class 文件结构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-class-%E7%9A%84%E6%9D%A5%E9%BE%99%E5%8E%BB%E8%84%89"><span class="toc-text">1. class 的来龙去脉</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%8A%E5%B8%9D%E8%A7%86%E8%A7%92%E7%9C%8B-class-%E6%96%87%E4%BB%B6"><span class="toc-text">2. 上帝视角看 class 文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-class-%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">3. class 文件结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text">4. 实例分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E9%AD%94%E6%95%B0-magic-number"><span class="toc-text">4.1 魔数 magic number</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E7%89%88%E6%9C%AC%E5%8F%B7"><span class="toc-text">4.2 版本号</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="toc-text">4.3 常量池</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E8%AE%BF%E9%97%AE%E6%A0%87%E5%BF%97%EF%BC%88access-flags%EF%BC%89"><span class="toc-text">4.4 访问标志（access_flags）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E7%B1%BB%E7%B4%A2%E5%BC%95%E3%80%81%E7%88%B6%E7%B1%BB%E7%B4%A2%E5%BC%95%E4%B8%8E%E6%8E%A5%E5%8F%A3%E7%B4%A2%E5%BC%95%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="toc-text">4.5 类索引、父类索引与接口索引计数器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-6-%E5%AD%97%E6%AE%B5%E8%A1%A8"><span class="toc-text">4.6 字段表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-7-%E5%AD%97%E6%AE%B5%E8%AE%BF%E9%97%AE%E6%A0%87%E5%BF%97"><span class="toc-text">4.7 字段访问标志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-8-%E6%96%B9%E6%B3%95%E8%A1%A8"><span class="toc-text">4.8 方法表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-9-%E5%B1%9E%E6%80%A7%E8%A1%A8"><span class="toc-text">4.9 属性表</span></a></li></ol></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91%E5%AD%97%E8%8A%82%E7%A0%81%E5%B1%82%E9%9D%A2%E5%88%86%E6%9E%90-class-%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">【笔记三】字节码层面分析 class 文件结构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-class-%E7%9A%84%E6%9D%A5%E9%BE%99%E5%8E%BB%E8%84%89"><span class="toc-text">1. class 的来龙去脉</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%8A%E5%B8%9D%E8%A7%86%E8%A7%92%E7%9C%8B-class-%E6%96%87%E4%BB%B6"><span class="toc-text">2. 上帝视角看 class 文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-class-%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">3. class 文件结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90"><span class="toc-text">4. 实例分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E9%AD%94%E6%95%B0-magic-number"><span class="toc-text">4.1 魔数 magic number</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E7%89%88%E6%9C%AC%E5%8F%B7"><span class="toc-text">4.2 版本号</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="toc-text">4.3 常量池</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E8%AE%BF%E9%97%AE%E6%A0%87%E5%BF%97%EF%BC%88access-flags%EF%BC%89"><span class="toc-text">4.4 访问标志（access_flags）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E7%B1%BB%E7%B4%A2%E5%BC%95%E3%80%81%E7%88%B6%E7%B1%BB%E7%B4%A2%E5%BC%95%E4%B8%8E%E6%8E%A5%E5%8F%A3%E7%B4%A2%E5%BC%95%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="toc-text">4.5 类索引、父类索引与接口索引计数器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-6-%E5%AD%97%E6%AE%B5%E8%A1%A8"><span class="toc-text">4.6 字段表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-7-%E5%AD%97%E6%AE%B5%E8%AE%BF%E9%97%AE%E6%A0%87%E5%BF%97"><span class="toc-text">4.7 字段访问标志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-8-%E6%96%B9%E6%B3%95%E8%A1%A8"><span class="toc-text">4.8 方法表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-9-%E5%B1%9E%E6%80%A7%E8%A1%A8"><span class="toc-text">4.9 属性表</span></a></li></ol></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

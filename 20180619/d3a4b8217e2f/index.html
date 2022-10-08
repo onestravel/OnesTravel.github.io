@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>CentOS 7 环境配置</title>
+  
+  
+  <meta property="og:title" content="CentOS 7 环境配置">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20180619/d3a4b8217e2f/index.html">
+  
+  
+  <meta property="og:img" content="/images/20180619/centos.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2018-06-19">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Linux">
+  
+  <meta property="og:article:tag" content="centos">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/20180619/centos.jpg" data-src="/images/20180619/centos.jpg"
+    srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      CentOS 7 环境配置
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2018-06-19T01:15:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2018-06-19</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/Linux/" class="post-meta-link">Linux</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>2.1k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Linux/" class="post-meta-link">Linux</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/centos/" class="post-meta-link">centos</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="CentOS-7-环境配置"><a href="#CentOS-7-环境配置" class="headerlink" title="CentOS 7 环境配置"></a>CentOS 7 环境配置</h1><h2 id="一、Centos7如何修改ssh默认端口22"><a href="#一、Centos7如何修改ssh默认端口22" class="headerlink" title="一、Centos7如何修改ssh默认端口22"></a>一、Centos7如何修改ssh默认端口22</h2><h3 id="1-修改-sshd-config-端口"><a href="#1-修改-sshd-config-端口" class="headerlink" title="1. 修改 sshd_config 端口"></a>1. 修改 sshd_config 端口</h3><ul>
+<li><p>编辑sshd_config 配置文件</p>
+<pre class=" language-shell"><code class="language-shell">$ vi /etc/ssh/sshd_config</code></pre>
+</li>
+<li><p>取消 #Port 22 的注释，在下一行添加你需要修改的新端口 Port<br> 10022。（这里不删除 22 端口是为了防止修改后新端口无法访问，造成无法用 ssh 连接服务器。）</p>
+<pre class=" language-shell"><code class="language-shell">Port 22  
+Port 10022  </code></pre>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-8440b63d98fab2c0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="添加新端口" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-8440b63d98fab2c0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+</li>
+<li><p>修改保存 sshd_config 文件<br>按下esc 退出编辑模式，输入 :wq，保存修改并退出</p>
+</li>
+<li><p>重启 sshd 服务</p>
+<pre class=" language-shell"><code class="language-shell">$  systemctl restart sshd</code></pre>
+<h3 id="2-配置防火墙-firewalld"><a href="#2-配置防火墙-firewalld" class="headerlink" title="2. 配置防火墙 firewalld"></a>2. 配置防火墙 firewalld</h3></li>
+<li><p>启用防火墙：</p>
+<pre class=" language-shell"><code class="language-shell">$ systemctl enable firewalld
+$ systemctl start firewalld</code></pre>
+</li>
+<li><p>查看防火墙状态</p>
+</li>
+</ul>
+<pre class=" language-shell"><code class="language-shell">$ systemctl status firewalld
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; vendor preset: enabled)
+   Active: active (running) since 二 2016-12-20 02:12:59 CST; 1 day 13h ago
+ Main PID: 10379 (firewalld)
+   CGroup: /system.slice/firewalld.service
+           └─10379 /usr/bin/python -Es /usr/sbin/firewalld --nofork --nopid
+$ firewall-cmd --state
+running  </code></pre>
+<ul>
+<li>查看防火墙当前「默认」和「激活」zone（区域）：</li>
+</ul>
+<pre class=" language-shell"><code class="language-shell">$ firewall-cmd --get-default-zone
+public  
+$ firewall-cmd --get-active-zones
+public  
+  interfaces: eth0 eth1</code></pre>
+<p>若没有激活区域的话，要执行下面的命令。</p>
+<ul>
+<li>激活 public 区域，增加网卡接口：</li>
+</ul>
+<pre class=" language-shell"><code class="language-shell">$ firewall-cmd --set-default-zone=public
+$ firewall-cmd --zone=public --add-interface=eth0
+success  
+$ firewall-cmd --zone=public --add-interface=eth1
+success  </code></pre>
+<p> *新增防火墙规则，开放 10022/TCP 端口：</p>
+<pre class=" language-shell"><code class="language-shell"># 以防新端口不生效，先把 22 端口暴露
+$ firewall-cmd --permanent --zone=public --add-port=22/tcp
+$ firewall-cmd --permanent --zone=public --add-port=10022/tcp
+success  
+# 重载防火墙
+$ firewall-cmd --reload
+# 查看暴露端口规则
+$ firewall-cmd --permanent --list-port
+
+443/tcp 80/tcp 22/tcp 10022/tcp  
+$ firewall-cmd --zone=public --list-all
+public (default, active)  
+  interfaces: eth0 eth1
+  sources:
+  services: dhcpv6-client ssh
+  ports: 443/tcp 80/tcp 22/tcp 10022/tcp
+  masquerade: no
+  forward-ports:
+  icmp-blocks:
+  rich rules:</code></pre>
+<ul>
+<li>退出 ssh 会话后，再用新的端口连接：</li>
+</ul>
+<pre class=" language-shell"><code class="language-shell">$ ssh -p 10022 root@example.cn
+</code></pre>
+<h3 id="3-打开-SELinux-端口"><a href="#3-打开-SELinux-端口" class="headerlink" title="3.  打开 SELinux 端口"></a>3.  打开 SELinux 端口</h3><p> SELinux 全称 Security Enhanced Linux (安全强化 Linux)，是 MAC (Mandatory Access Control，强制访问控制系统)的一个实现，目的在于明确的指明某个进程可以访问哪些资源(文件、网络端口等)。</p>
+<p>对于 ssh，SELinux 默认只允许 22 端口，我们可以用 SELinux 管理配置工具 semanage，来修改 ssh 可访问的端口。</p>
+<p><strong>安装 semanage 工具</strong></p>
+<pre class=" language-shell"><code class="language-shell">$ yum provides semanage
+$ yum -y install policycoreutils-python</code></pre>
+<p>** 打开ssh 10022 端口**</p>
+<pre class=" language-shell"><code class="language-shell"># 为 ssh 添加新的允许端口
+$ semanage port -a -t ssh_port_t -p tcp 10022
+# 查看当前 SELinux 允许的端口
+$ semanage port -l | grep ssh
+ssh_port_t                     tcp      10022, 22  </code></pre>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-4b2745ba22a5366d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-4b2745ba22a5366d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<p><strong>错误处理</strong></p>
+<p>当 SELINUX 配置为禁用状态时，使用 semanage 会报错提示无法读取 policy 文件：</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-55f7160624f176a4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="semanage 报错" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-55f7160624f176a4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<p>修改 /etc/selinux/config 配置，启用 SELinux：</p>
+<pre class=" language-shell"><code class="language-shell">$ vi /etc/selinux/config
+SELINUX=permissive  
+# 重启服务器
+$ init 6
+# 重启后查看 SELinux 状态
+$ sestatus
+# if it shows disable, you can run
+$ load_policy -qi</code></pre>
+<p><strong>检查SELINUX配置</strong></p>
+<pre class=" language-shell"><code class="language-shell">$ semanage port -a -t ssh_port_t -p tcp 10022
+$ semanage port -l | grep ssh
+ssh_port_t                     tcp      10022, 22  
+# 重启 ssh 服务
+systemctl restart sshd </code></pre>
+<p>######*注：semange 不能禁用 ssh 的 22 端口：</p>
+<pre class=" language-shell"><code class="language-shell">$ semanage port -d -t ssh_port_t -p tcp 22
+ValueError: 在策略中定义了端口 tcp/22，无法删除。</code></pre>
+<p><img src="https://upload-images.jianshu.io/upload_images/3236417-e14990f00465816c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="semange 不能禁用 ssh 的 22 端口" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://upload-images.jianshu.io/upload_images/3236417-e14990f00465816c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" class="lozad post-image"></p>
+<h2 id="二、新建组和用户"><a href="#二、新建组和用户" class="headerlink" title="二、新建组和用户"></a>二、新建组和用户</h2><h3 id="【组的操作】"><a href="#【组的操作】" class="headerlink" title="【组的操作】"></a>【组的操作】</h3><h4 id="1、新建组-example"><a href="#1、新建组-example" class="headerlink" title="1、新建组 example"></a>1、新建组 example</h4><ul>
+<li>使用groupadd 命令添加组<br>用法：groupadd [选项] 组<pre class=" language-shell"><code class="language-shell">选项:
+-f, --force        如果组已经存在则成功退出
+          并且如果 GID 已经存在则取消 -g
+-g, --gid GID                 为新组使用 GID
+-h, --help                    显示此帮助信息并推出
+-K, --key KEY=VALUE           不使用 /etc/login.defs 中的默认值
+-o, --non-unique              允许创建有重复 GID 的组
+-p, --password PASSWORD       为新组使用此加密过的密码
+-r, --system                  创建一个系统账户
+-R, --root CHROOT_DIR         chroot 到的目录</code></pre>
+</li>
+</ul>
+<p>example：</p>
+<pre class=" language-shell"><code class="language-shell"># groupadd -g [组的ID] [组名]
+$ groupadd -g 10005 example</code></pre>
+<h4 id="2、删除组-example"><a href="#2、删除组-example" class="headerlink" title="2、删除组 example"></a>2、删除组 example</h4><ul>
+<li>使用 groupdel 命令删除组<br>用法：groupdel [选项] 组<pre class=" language-shell"><code class="language-shell">选项:
+-h, --help                    显示此帮助信息并推出
+-R, --root CHROOT_DIR         chroot 到的目录</code></pre>
+</li>
+</ul>
+<p>example：</p>
+<pre class=" language-shell"><code class="language-shell"># groupdel [组名]
+$ groupdel example</code></pre>
+<ol start="2">
+<li>删除组 example</li>
+</ol>
+<ul>
+<li>使用 groupdel 命令删除组<br>用法：groupdel [选项] 组<pre class=" language-shell"><code class="language-shell">选项:
+-h, --help                    显示此帮助信息并推出
+-R, --root CHROOT_DIR         chroot 到的目录</code></pre>
+</li>
+</ul>
+<p>example：</p>
+<pre class=" language-shell"><code class="language-shell"># groupdel [组名]
+$ groupdel example</code></pre>
+<h4 id="3、修改组信息-example-，将组example-的id-更改为-10006-，名称更改为-exampleGroup"><a href="#3、修改组信息-example-，将组example-的id-更改为-10006-，名称更改为-exampleGroup" class="headerlink" title="3、修改组信息 example ，将组example 的id 更改为 10006 ，名称更改为 exampleGroup"></a>3、修改组信息 example ，将组example 的id 更改为 10006 ，名称更改为 exampleGroup</h4><ul>
+<li>使用 groupmod 来修改组信息</li>
+</ul>
+<p>用法：groupmod [选项] 组</p>
+<pre class=" language-shell"><code class="language-shell">选项:
+  -g, --gid GID                 将组 ID 改为 GID
+  -h, --help                    显示此帮助信息并推出
+  -n, --new-name NEW_GROUP      改名为 NEW_GROUP
+  -o, --non-unique              允许使用重复的 GID
+  -p, --password PASSWORD    将密码更改为(加密过的) PASSWORD
+  -R, --root CHROOT_DIR         chroot 到的目录</code></pre>
+<p>example:</p>
+<pre class=" language-shell"><code class="language-shell"># groupmod -g [组ID] [组名]
+$ groupmod -g 10006 example
+
+# groupmod -n [新组名] [组名]
+groupmod -n exampleGroup example</code></pre>
+<h3 id="【用户的操作】"><a href="#【用户的操作】" class="headerlink" title="【用户的操作】"></a>【用户的操作】</h3><h4 id="1、新建用户-example"><a href="#1、新建用户-example" class="headerlink" title="1、新建用户 example"></a>1、新建用户 example</h4><ul>
+<li>使用adduser 命令来新建用户<br>用法：adduser [选项] 登录<pre><code>adduser -D
+adduser -D [选项]</code></pre><pre class=" language-shell"><code class="language-shell">选项：
+-b, --base-dir BASE_DIR    新账户的主目录的基目录
+-c, --comment COMMENT         新账户的 GECOS 字段
+-d, --home-dir HOME_DIR       新账户的主目录
+-D, --defaults        显示或更改默认的 useradd 配置
+-e, --expiredate EXPIRE_DATE  新账户的过期日期
+-f, --inactive INACTIVE       新账户的密码不活动期
+-g, --gid GROUP        新账户主组的名称或 ID
+-G, --groups GROUPS    新账户的附加组列表
+-h, --help                    显示此帮助信息并推出
+-k, --skel SKEL_DIR    使用此目录作为骨架目录
+-K, --key KEY=VALUE           不使用 /etc/login.defs 中的默认值
+-l, --no-log-init    不要将此用户添加到最近登录和登录失败数据库
+-m, --create-home    创建用户的主目录
+-M, --no-create-home        不创建用户的主目录
+-N, --no-user-group    不创建同名的组
+-o, --non-unique        允许使用重复的 UID 创建用户
+-p, --password PASSWORD        加密后的新账户密码
+-r, --system                  创建一个系统账户
+-R, --root CHROOT_DIR         chroot 到的目录
+-s, --shell SHELL        新账户的登录 shell
+-u, --uid UID            新账户的用户 ID
+-U, --user-group        创建与用户同名的组
+-Z, --selinux-user SEUSER        为 SELinux 用户映射使用指定 SEUSER</code></pre>
+</li>
+</ul>
+<p>example: 新建用户 example  ,指定用户id 为10010</p>
+<pre class=" language-shell"><code class="language-shell"># adduser -u [用户ID] [用户名]
+$ adduser -u 10010 example
+
+# 查看新创建的用户
+$ id example
+uid=10010(example) gid=10010(example) 组=10010(example)
+</code></pre>
+<h4 id="2、为新建的用户设置密码-passwd-新建用户名"><a href="#2、为新建的用户设置密码-passwd-新建用户名" class="headerlink" title="2、为新建的用户设置密码 passwd [新建用户名]"></a>2、为新建的用户设置密码 passwd [新建用户名]</h4><ul>
+<li>使用passwd [新建用户名] 命令来设置新用户密码</li>
+</ul>
+<p>直接输入passwd，回车，修改的是当前用户的密码</p>
+<p>example:</p>
+<pre class=" language-shell"><code class="language-shell">$ passwd example
+更改用户 example 的密码 。
+新的 密码：
+无效的密码： 密码包含用户名在某些地方
+重新输入新的 密码：
+passwd：所有的身份验证令牌已经成功更新。</code></pre>
+<p>在设置密码的时候，会进行验证密码是否包含用户名，是否含有特殊字符，大小写字母和数字，会有相应的提示，但是继续输入，也是可以设置成功的。</p>
+<h4 id="3、删除用户-example"><a href="#3、删除用户-example" class="headerlink" title="3、删除用户 example"></a>3、删除用户 example</h4><ul>
+<li>使用 userdel 命令来删除用户<br>用法：userdel [选项] 登录</li>
+</ul>
+<pre class=" language-shell"><code class="language-shell">选项：
+  -f, --force                   force some actions that would fail otherwise
+                                e.g. removal of user still logged in
+                                or files, even if not owned by the user
+  -h, --help                    显示此帮助信息并推出
+  -r, --remove                  删除主目录和邮件池
+  -R, --root CHROOT_DIR         chroot 到的目录
+  -Z, --selinux-user            为用户删除所有的 SELinux 用户映射
+</code></pre>
+<p>example: 删除用户 example  </p>
+<pre class=" language-shell"><code class="language-shell"># userdel [用户名]
+$ userdel  example
+
+# 查看用户example
+$ id example
+id: example: no such user
+</code></pre>
+<h4 id="4、修改用户-example-为-exampleUser"><a href="#4、修改用户-example-为-exampleUser" class="headerlink" title="4、修改用户 example 为 exampleUser"></a>4、修改用户 example 为 exampleUser</h4><ul>
+<li>使用 usermod 命令来修改用户信息<br>用法：usermod [选项] 登录</li>
+</ul>
+<pre class=" language-shell"><code class="language-shell">选项：
+  -c, --comment 注释            GECOS 字段的新值
+  -d, --home HOME_DIR           用户的新主目录
+  -e, --expiredate EXPIRE_DATE  设定帐户过期的日期为 EXPIRE_DATE
+  -f, --inactive INACTIVE       过期 INACTIVE 天数后，设定密码为失效状态
+  -g, --gid GROUP               强制使用 GROUP 为新主组
+  -G, --groups GROUPS           新的附加组列表 GROUPS
+  -a, --append GROUP            将用户追加至上边 -G 中提到的附加组中，
+                                并不从其它组中删除此用户
+  -h, --help                    显示此帮助信息并推出
+  -l, --login LOGIN             新的登录名称
+  -L, --lock                    锁定用户帐号
+  -m, --move-home               将家目录内容移至新位置 (仅于 -d 一起使用)
+  -o, --non-unique              允许使用重复的(非唯一的) UID
+  -p, --password PASSWORD       将加密过的密码 (PASSWORD) 设为新密码
+  -R, --root CHROOT_DIR         chroot 到的目录
+  -s, --shell SHELL             该用户帐号的新登录 shell
+  -u, --uid UID                 用户帐号的新 UID
+  -U, --unlock                  解锁用户帐号
+  -Z, --selinux-user  SEUSER       用户账户的新 SELinux 用户映射
+
+</code></pre>
+<p>example: 修改用户 example 为 exampleUser  ,更改组为 exampleGroup</p>
+<pre class=" language-shell"><code class="language-shell"># usermod -u  [用户ID] [用户名]
+$ usermod -u 10006 example
+
+# 查看用户example
+$ id example
+uid=10006(example) gid=10010(example) 组=10010(example)
+
+# usermod -g  [组ID] [用户名]
+$ usermod -u 10006 example
+
+# 查看用户example
+$ id example
+uid=10006(example) gid=10006(exampleGroup) 组=10006(exampleGroup)
+
+# usermod -l  [新用户名] [用户名]
+$ usermod -l exampleUser example
+
+# 查看用户exampleUser
+$ id exampleUser
+uid=10006(exampleUser) gid=10006(exampleGroup) 组=10006(exampleGroup)
+</code></pre>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20180619/d3a4b8217e2f/">https://blog.onestravel.cn/20180619/d3a4b8217e2f/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20180620/761acc2958f8/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">使用 Hexo 来优化管理自己的博客 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20180615/2ffd39bdffc1/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">在Linux上配置Jenkins自动化构建Android项目的环境 ---- Jenkins自动化部署学习笔记（五） </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#CentOS-7-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-text">CentOS 7 环境配置</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81Centos7%E5%A6%82%E4%BD%95%E4%BF%AE%E6%94%B9ssh%E9%BB%98%E8%AE%A4%E7%AB%AF%E5%8F%A322"><span class="toc-text">一、Centos7如何修改ssh默认端口22</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BF%AE%E6%94%B9-sshd-config-%E7%AB%AF%E5%8F%A3"><span class="toc-text">1. 修改 sshd_config 端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E9%85%8D%E7%BD%AE%E9%98%B2%E7%81%AB%E5%A2%99-firewalld"><span class="toc-text">2. 配置防火墙 firewalld</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%89%93%E5%BC%80-SELinux-%E7%AB%AF%E5%8F%A3"><span class="toc-text">3.  打开 SELinux 端口</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%96%B0%E5%BB%BA%E7%BB%84%E5%92%8C%E7%94%A8%E6%88%B7"><span class="toc-text">二、新建组和用户</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E3%80%90%E7%BB%84%E7%9A%84%E6%93%8D%E4%BD%9C%E3%80%91"><span class="toc-text">【组的操作】</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%96%B0%E5%BB%BA%E7%BB%84-example"><span class="toc-text">1、新建组 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E5%88%A0%E9%99%A4%E7%BB%84-example"><span class="toc-text">2、删除组 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E4%BF%AE%E6%94%B9%E7%BB%84%E4%BF%A1%E6%81%AF-example-%EF%BC%8C%E5%B0%86%E7%BB%84example-%E7%9A%84id-%E6%9B%B4%E6%94%B9%E4%B8%BA-10006-%EF%BC%8C%E5%90%8D%E7%A7%B0%E6%9B%B4%E6%94%B9%E4%B8%BA-exampleGroup"><span class="toc-text">3、修改组信息 example ，将组example 的id 更改为 10006 ，名称更改为 exampleGroup</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E3%80%90%E7%94%A8%E6%88%B7%E7%9A%84%E6%93%8D%E4%BD%9C%E3%80%91"><span class="toc-text">【用户的操作】</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%96%B0%E5%BB%BA%E7%94%A8%E6%88%B7-example"><span class="toc-text">1、新建用户 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E4%B8%BA%E6%96%B0%E5%BB%BA%E7%9A%84%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E5%AF%86%E7%A0%81-passwd-%E6%96%B0%E5%BB%BA%E7%94%A8%E6%88%B7%E5%90%8D"><span class="toc-text">2、为新建的用户设置密码 passwd [新建用户名]</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E5%88%A0%E9%99%A4%E7%94%A8%E6%88%B7-example"><span class="toc-text">3、删除用户 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E3%80%81%E4%BF%AE%E6%94%B9%E7%94%A8%E6%88%B7-example-%E4%B8%BA-exampleUser"><span class="toc-text">4、修改用户 example 为 exampleUser</span></a></li></ol></li></ol></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#CentOS-7-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-text">CentOS 7 环境配置</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81Centos7%E5%A6%82%E4%BD%95%E4%BF%AE%E6%94%B9ssh%E9%BB%98%E8%AE%A4%E7%AB%AF%E5%8F%A322"><span class="toc-text">一、Centos7如何修改ssh默认端口22</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BF%AE%E6%94%B9-sshd-config-%E7%AB%AF%E5%8F%A3"><span class="toc-text">1. 修改 sshd_config 端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E9%85%8D%E7%BD%AE%E9%98%B2%E7%81%AB%E5%A2%99-firewalld"><span class="toc-text">2. 配置防火墙 firewalld</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%89%93%E5%BC%80-SELinux-%E7%AB%AF%E5%8F%A3"><span class="toc-text">3.  打开 SELinux 端口</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%96%B0%E5%BB%BA%E7%BB%84%E5%92%8C%E7%94%A8%E6%88%B7"><span class="toc-text">二、新建组和用户</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E3%80%90%E7%BB%84%E7%9A%84%E6%93%8D%E4%BD%9C%E3%80%91"><span class="toc-text">【组的操作】</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%96%B0%E5%BB%BA%E7%BB%84-example"><span class="toc-text">1、新建组 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E5%88%A0%E9%99%A4%E7%BB%84-example"><span class="toc-text">2、删除组 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E4%BF%AE%E6%94%B9%E7%BB%84%E4%BF%A1%E6%81%AF-example-%EF%BC%8C%E5%B0%86%E7%BB%84example-%E7%9A%84id-%E6%9B%B4%E6%94%B9%E4%B8%BA-10006-%EF%BC%8C%E5%90%8D%E7%A7%B0%E6%9B%B4%E6%94%B9%E4%B8%BA-exampleGroup"><span class="toc-text">3、修改组信息 example ，将组example 的id 更改为 10006 ，名称更改为 exampleGroup</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E3%80%90%E7%94%A8%E6%88%B7%E7%9A%84%E6%93%8D%E4%BD%9C%E3%80%91"><span class="toc-text">【用户的操作】</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%96%B0%E5%BB%BA%E7%94%A8%E6%88%B7-example"><span class="toc-text">1、新建用户 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E4%B8%BA%E6%96%B0%E5%BB%BA%E7%9A%84%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E5%AF%86%E7%A0%81-passwd-%E6%96%B0%E5%BB%BA%E7%94%A8%E6%88%B7%E5%90%8D"><span class="toc-text">2、为新建的用户设置密码 passwd [新建用户名]</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E5%88%A0%E9%99%A4%E7%94%A8%E6%88%B7-example"><span class="toc-text">3、删除用户 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E3%80%81%E4%BF%AE%E6%94%B9%E7%94%A8%E6%88%B7-example-%E4%B8%BA-exampleUser"><span class="toc-text">4、修改用户 example 为 exampleUser</span></a></li></ol></li></ol></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#CentOS-7-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-text">CentOS 7 环境配置</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81Centos7%E5%A6%82%E4%BD%95%E4%BF%AE%E6%94%B9ssh%E9%BB%98%E8%AE%A4%E7%AB%AF%E5%8F%A322"><span class="toc-text">一、Centos7如何修改ssh默认端口22</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BF%AE%E6%94%B9-sshd-config-%E7%AB%AF%E5%8F%A3"><span class="toc-text">1. 修改 sshd_config 端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E9%85%8D%E7%BD%AE%E9%98%B2%E7%81%AB%E5%A2%99-firewalld"><span class="toc-text">2. 配置防火墙 firewalld</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%89%93%E5%BC%80-SELinux-%E7%AB%AF%E5%8F%A3"><span class="toc-text">3.  打开 SELinux 端口</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%96%B0%E5%BB%BA%E7%BB%84%E5%92%8C%E7%94%A8%E6%88%B7"><span class="toc-text">二、新建组和用户</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E3%80%90%E7%BB%84%E7%9A%84%E6%93%8D%E4%BD%9C%E3%80%91"><span class="toc-text">【组的操作】</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%96%B0%E5%BB%BA%E7%BB%84-example"><span class="toc-text">1、新建组 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E5%88%A0%E9%99%A4%E7%BB%84-example"><span class="toc-text">2、删除组 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E4%BF%AE%E6%94%B9%E7%BB%84%E4%BF%A1%E6%81%AF-example-%EF%BC%8C%E5%B0%86%E7%BB%84example-%E7%9A%84id-%E6%9B%B4%E6%94%B9%E4%B8%BA-10006-%EF%BC%8C%E5%90%8D%E7%A7%B0%E6%9B%B4%E6%94%B9%E4%B8%BA-exampleGroup"><span class="toc-text">3、修改组信息 example ，将组example 的id 更改为 10006 ，名称更改为 exampleGroup</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E3%80%90%E7%94%A8%E6%88%B7%E7%9A%84%E6%93%8D%E4%BD%9C%E3%80%91"><span class="toc-text">【用户的操作】</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%96%B0%E5%BB%BA%E7%94%A8%E6%88%B7-example"><span class="toc-text">1、新建用户 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E4%B8%BA%E6%96%B0%E5%BB%BA%E7%9A%84%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E5%AF%86%E7%A0%81-passwd-%E6%96%B0%E5%BB%BA%E7%94%A8%E6%88%B7%E5%90%8D"><span class="toc-text">2、为新建的用户设置密码 passwd [新建用户名]</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E5%88%A0%E9%99%A4%E7%94%A8%E6%88%B7-example"><span class="toc-text">3、删除用户 example</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E3%80%81%E4%BF%AE%E6%94%B9%E7%94%A8%E6%88%B7-example-%E4%B8%BA-exampleUser"><span class="toc-text">4、修改用户 example 为 exampleUser</span></a></li></ol></li></ol></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

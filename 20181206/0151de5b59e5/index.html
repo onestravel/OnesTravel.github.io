@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>(一)Kotlin 基础语法</title>
+  
+  
+  <meta property="og:title" content="(一)Kotlin 基础语法">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20181206/0151de5b59e5/index.html">
+  
+  
+  <meta property="og:img" content="/images/kotlin.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2018-12-06">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="Kotlin">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/kotlin.jpg" data-src="/images/kotlin.jpg"
+    srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      (一)Kotlin 基础语法
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2018-12-06T02:00:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2018-12-06</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/Kotlin/" class="post-meta-link">Kotlin</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>2.2k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/Kotlin/" class="post-meta-link">Kotlin</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h3 id="一、-Kotlin语法"><a href="#一、-Kotlin语法" class="headerlink" title="一、 Kotlin语法"></a>一、 Kotlin语法</h3><h4 id="1-变量与常量"><a href="#1-变量与常量" class="headerlink" title="1. 变量与常量"></a>1. 变量与常量</h4><pre><code> &lt;修饰符&gt; &lt;变量/常量名&gt;[:类型] = [值]</code></pre><p>在一般情况下:[类型]可省略，编译器进行类型推导</p>
+<h5 id="常量："><a href="#常量：" class="headerlink" title="常量："></a>常量：</h5><pre><code>//val 修饰的为常量，不可再次赋值
+val FINAL_HELLO_WORLD :String = &quot;Hello World&quot;
+
+val USER_TYPE = &quot;Admin&quot;</code></pre><h5 id="变量："><a href="#变量：" class="headerlink" title="变量："></a>变量：</h5><pre><code>//var 修饰的为变量，值可变化
+var index:Int =1
+//index 自增
+index++
+
+var username=&quot;ZhangSan&quot;</code></pre><h5 id="字符串模板："><a href="#字符串模板：" class="headerlink" title="字符串模板："></a>字符串模板：</h5><p>在Kotlin中可使用字符串模板来实现字符串中输出变量/常量值</p>
+<pre><code>var username=&quot;ZhangSan&quot;
+fun main(args:Array&lt;String&gt;)&#123;
+    username = args[0]
+    println(&quot;欢迎 $&#123;username&#125; 登录系统！&quot;)
+&#125;</code></pre><h4 id="2-函数（得函数者得天下）"><a href="#2-函数（得函数者得天下）" class="headerlink" title="2. 函数（得函数者得天下）"></a>2. 函数（得函数者得天下）</h4><ul>
+<li><p>[函数修饰符] <fun><em>[函数名称]</em>([参数列表])[:返回值类型]{[函数体]}</p>
+</li>
+<li><p>[函数修饰符] <fun><em>[函数名称]</em>([参数列表])=[表达式]</p>
+</li>
+<li><p>注：[]中的内容可省略，编译器可进行类型推导得出</p>
+</li>
+</ul>
+<pre><code>
+ // 根据时间字符串返回日期
+private fun getDate(dateStr:String): Date &#123;
+    val sdf = SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;)
+    return sdf.parse(dateStr)
+&#125;
+
+
+// 传入两个整形数，计算他们的和并输出
+fun add(num1:Int,num2:Int)&#123;
+    println(&quot;$num1 + $num2 = $&#123;num1+num2&#125;&quot;)
+&#125;
+
+// 传入姓名，输出 Hi [传入的姓名]
+fun sayHi(name:String)=println(&quot;Hi $name&quot;)
+
+</code></pre><ul>
+<li>匿名函数</li>
+</ul>
+<p>匿名函数就是没有函数名称的函数，但是匿名函数必须赋值给一个变量/常量</p>
+<pre><code>// 匿名函数
+val sayHi = fun(name:String)=println(&quot;Hi $name&quot;)</code></pre><h4 id="3-Lambda-表达式"><a href="#3-Lambda-表达式" class="headerlink" title="3. Lambda 表达式"></a>3. Lambda 表达式</h4><p>Lambda 表达式 就是匿名函数</p>
+<ul>
+<li>语法：{[参数列表] -&gt; [函数体，最后一行是返回值]}</li>
+</ul>
+<pre><code>例如：
+val sum = &#123;a:Int,b:Int -&gt; a+b&#125;</code></pre><ul>
+<li>Lambda 表达式类型表示</li>
+</ul>
+<pre><code>// 无参，返回值为Unit
+() -&gt; Unit
+
+// 传入整型，返回一个整型
+(Int) -&gt; Int
+
+// 传入字符串、Lambda表达式，返回Boolean
+(String,(String) -&gt; String) -&gt; Boolean</code></pre><ul>
+<li>Lambda 表达式的调用</li>
+</ul>
+<p>用()进行调用</p>
+<p>等价于 invoke()</p>
+<pre><code>val sum = &#123;a:Int,b:Int -&gt; a+b&#125;
+sum(2,3)
+sum.invoke(2,3)</code></pre><ul>
+<li>Lambda 表达式的简化</li>
+</ul>
+<p>函数参数调用时最后一个Lambda可以移出去</p>
+<p>函数参数只有一个Lambda，调用时小括号可以省略</p>
+<p>Lambda只有一个参数可以默认为it</p>
+<p>入参、返回值与形参一致的函数可以用函数的引用的方式作为实参传入</p>
+<pre><code>val arr: Array&lt;String&gt; = arrayOf(&quot;1&quot;,&quot;s&quot;,&quot;sd&quot;,&quot;rer&quot;,&quot;54&quot;,&quot;65&quot;)
+
+// Lambda 表达式 ，传入it ,并且打印it
+// Lambda只有一个参数可以默认为it
+arr.forEach(&#123;it -&gt; println(it)&#125;)
+
+// 上面的Lambda 表达式简化后
+// Lambda只有一个参数可以默认为it
+// 函数参数调用时最后一个Lambda可以移出去
+arr.forEach()&#123;println(it)&#125;
+
+// 上面的Lambda 表达式简化后
+// Lambda只有一个参数可以默认为it
+// 函数参数只有一个Lambda，调用时小括号可以省略
+arr.forEach&#123;println(it)&#125;
+
+// 上面的Lambda 表达式简化后
+// Lambda只有一个参数可以默认为it
+// 入参、返回值与形参一致的函数可以用函数的引用的方式作为实参传入
+arr.forEach(::println)
+
+
+
+// 判断数组中值为rer 是跳出本次循环，继续下次循环，相当于continue
+
+ arr.forEach ForEach@&#123;
+     if(it == &quot;rer&quot;) return@ForEach
+     println(it)
+ &#125;
+
+// 判断数组中值为rer 是跳出循环，不再进行下面的循环，继续制作该循环后面的代码
+ run breaking@ &#123;
+     arr.forEach &#123;
+        if(it == &quot;rer&quot;) return@breaking
+        println(it)
+    &#125;&#125;</code></pre><h4 id="3-类成员"><a href="#3-类成员" class="headerlink" title="3. 类成员"></a>3. 类成员</h4><ul>
+<li>属性：或者说成员变量，类范围内的变量</li>
+<li>方法：或者说成员函数，类范围内的函数</li>
+</ul>
+<p>函数和方法的区别：</p>
+<p>函数强调功能本身，不考虑从属</p>
+<p>方法的称呼通常是从类的角度出发</p>
+<p>只是叫法不同而已</p>
+<ul>
+<li>定义属性</li>
+</ul>
+<p>构造方法参数中val/var 修饰的都是属性</p>
+<p>类内部也可以定义属性</p>
+<pre><code>class Hello(val aFiled:Int,notAField:Int)&#123;
+    var anotherField:Float = 3f
+&#125;</code></pre><ul>
+<li>属性访问控制</li>
+</ul>
+<p>属性可以定义getter/setter</p>
+<pre><code>val a: Int=0
+    get()=field
+
+var b: Float = 0f
+    get()&#123;
+        return field / 3;
+    &#125;
+    set(value)&#123;field = value&#125;</code></pre><ul>
+<li>属性初始化</li>
+</ul>
+<p>属性的初始化尽量在构造方法中完成</p>
+<p>无法在构造方法中初始化，尝试降级为局部变量</p>
+<p>var 用 lateinit 延迟初始化，val 用 lazy 延迟初始化</p>
+<p>可空类型谨慎用 null 直接初始化</p>
+<h4 id="4-运算符"><a href="#4-运算符" class="headerlink" title="4. 运算符( +-*/%^? )"></a>4. 运算符( +-*/%^? )</h4><p>官网定义</p>
+<table>
+<thead>
+<tr>
+<th>Expression</th>
+<th>Translated to</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>+a</td>
+<td>a.unaryPlus()</td>
+</tr>
+<tr>
+<td>-a</td>
+<td>a.unaryMinus()</td>
+</tr>
+<tr>
+<td>!a</td>
+<td>a.not()</td>
+</tr>
+<tr>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>a++</td>
+<td>a.inc() + see below</td>
+</tr>
+<tr>
+<td>a–</td>
+<td>a.dec() + see below</td>
+</tr>
+<tr>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>a+b</td>
+<td>a.plus(b)</td>
+</tr>
+<tr>
+<td>a-b</td>
+<td>a.minus(b)</td>
+</tr>
+<tr>
+<td>a*b</td>
+<td>a.times(b)</td>
+</tr>
+<tr>
+<td>a/b</td>
+<td>a.div(b)</td>
+</tr>
+<tr>
+<td>a%b</td>
+<td>a.rem(b),a.mod(b)(deprecated)</td>
+</tr>
+<tr>
+<td>a..b</td>
+<td>a.rangeTo(b)</td>
+</tr>
+<tr>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>a in b</td>
+<td>b.contains(a)</td>
+</tr>
+<tr>
+<td>a !in b</td>
+<td>!b.contains(a)</td>
+</tr>
+<tr>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>a[i]</td>
+<td>a.get(i)</td>
+</tr>
+<tr>
+<td>a[i,j]</td>
+<td>a.get(i,j)</td>
+</tr>
+<tr>
+<td>a[i_1,…,i_n]</td>
+<td>a.get(i_1,…,i_n)</td>
+</tr>
+<tr>
+<td>a[i] = b</td>
+<td>a.set(i,b)</td>
+</tr>
+<tr>
+<td>a[i,j] = b</td>
+<td>a.set(i,,j,b)</td>
+</tr>
+<tr>
+<td>a[i_1,…,i_n] =b</td>
+<td>a.set(i_1,…,i_n,b)</td>
+</tr>
+<tr>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>a()</td>
+<td>a.invoke()</td>
+</tr>
+<tr>
+<td>a(i)</td>
+<td>a.invoke(i)</td>
+</tr>
+<tr>
+<td>a(i,j)</td>
+<td>a.invoke(i,j)</td>
+</tr>
+<tr>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>a += b</td>
+<td>a.plusAssign(b)</td>
+</tr>
+<tr>
+<td>a -= b</td>
+<td>a.minusAssign(b)</td>
+</tr>
+<tr>
+<td>a *= b</td>
+<td>a.timesAssign(b)</td>
+</tr>
+<tr>
+<td>a /= b</td>
+<td>a.divAssign(b)</td>
+</tr>
+<tr>
+<td>a %= b</td>
+<td>a.modAssign(b)</td>
+</tr>
+</tbody></table>
+<ul>
+<li>基本运算符</li>
+</ul>
+<p>任何类可以定义或者重载父类的基本运算符</p>
+<p>通过运算符对应的具名函数来定义</p>
+<p>对参数的个数做要求，对参数和返回值类型不做要求</p>
+<p>不能像 Scala 一样定义人与运算符</p>
+<pre><code>// 定义一个复数，实部与实部相加，虚部与虚部相加
+class Complex(var real: Double,var imaginary: Double)&#123;
+    operator fun plus(other: Complex):Complex&#123;
+        return Complex(real+other.real,imaginary + other.imaginary)
+    &#125;
+    override fun toString():String&#123;
+        return &quot;$real + $&#123;imaginary&#125;i&quot;
+    &#125;
+&#125;
+
+
+fun main(args: Array&lt;String&gt;)&#123;
+    val c1 = Complex(3.0,4.0)//3.0+4.0i
+    val c2 = Cpmplex(2.0,7.5)//2.0+7.5i
+    println(c1 + c2)
+&#125;</code></pre><ul>
+<li>中缀表达式</li>
+</ul>
+<p>只有一个参数，且用infix 修饰的函数</p>
+<pre><code>class Book &#123;
+    infix fun on(place:String)&#123;...&#125;
+&#125;
+
+Book() on &quot;My Desk&quot;</code></pre><ul>
+<li><p>分支表达式</p>
+</li>
+<li><p>if 表达式<br>if … else</p>
+<pre><code>if(a == b) ... else if(a == c) ... else ...</code></pre><p>表达式与完备性</p>
+</li>
+</ul>
+<pre><code>val x = if(b&lt;0) 0 else b
+
+val x = if(b&lt;0)0 //错误，赋值时，分支必须完备</code></pre><ul>
+<li>when 表达式</li>
+</ul>
+<p>加强版的 switch ，支持任意类型</p>
+<p>支持纯表达式条件分支（类似if）</p>
+<p>表达式与完备性特性</p>
+<ul>
+<li>循环语句</li>
+</ul>
+<p>基本写法:<br>for(element in elements) …</p>
+<p>给任意类实现 Iterator 方法</p>
+<pre><code>val arr: Array&lt;String&gt; = arrayOf(&quot;1&quot;,&quot;s&quot;,&quot;sd&quot;,&quot;rer&quot;,&quot;54&quot;,&quot;65&quot;)
+
+for(a in arr)&#123;
+    println(a)
+&#125;
+
+
+for((index,value) in arr.withIndex())&#123;
+    println(&quot;$index -&gt; $value&quot;)
+&#125;
+
+for(indexedValue in arr.withIndex())&#123;
+    println(&quot;$&#123;indexedValue.index&#125; -&gt; $&#123;indexedValue.value&#125;&quot;)
+&#125;
+
+
+class MyIterator(val iterator: Iterator&lt;Int&gt;)&#123;
+    operator fun next():Int&#123;
+        return iterator.next
+    &#125;
+
+     operator fun hasNext():Boolean&#123;
+        return iterator.hasNext()
+    &#125;
+&#125;
+
+cal MyIntList&#123;
+    private val list = ArrayList&lt;Int&gt;()
+
+    fun add(int: Int)&#123;
+        list.add(int)
+    &#125;
+
+    fun remove(int: Int)&#123;
+        list.remove(int)
+    &#125;
+
+    operator fun iterator():MyIterator&#123;
+        return MyIterator(list.iterator())
+    &#125;
+&#125;
+
+
+fun main(args: Array&lt;String&gt;)&#123;
+    val list = MyIntList()
+    list.add(1)
+    list.add(2)
+    list.add(3)
+
+    for(i in list)&#123;
+        println(i)
+    &#125;
+
+&#125;
+
+// while
+var x=5
+while(x&gt;0)&#123;
+    println(x)
+    x--
+&#125;
+
+
+do&#123;
+   println(x)
+    x--
+&#125;while(x&gt;0)
+</code></pre><ul>
+<li>跳出或跳过循环</li>
+</ul>
+<p>跳出，终止循环  break  </p>
+<p>跳过当前循环  continue  </p>
+<p>多层循环嵌套的终止结合标签使用</p>
+<pre><code>Outter@for(...)&#123;
+    Inner@while(i&lt;0)&#123;
+        if(...) break@Outter
+    &#125;
+&#125;</code></pre><h4 id="5-异常捕获"><a href="#5-异常捕获" class="headerlink" title="5. 异常捕获"></a>5. 异常捕获</h4><p>使用 try{}catch(e: Exception){} 进行异常捕获</p>
+<pre><code>try&#123;  
+    //程序正常执行
+&#125;catch(e: Exception)&#123;
+    //程序出现异常，可根据异常类型捕获相应的异常
+&#125;finally&#123;
+    //无论执行成功还是出现异常都会执行
+&#125;</code></pre><h4 id="6-具名参数"><a href="#6-具名参数" class="headerlink" title="6. 具名参数"></a>6. 具名参数</h4><p>给函数的实参附上形参</p>
+<pre><code>fun sum(arg1:Int,arg2:Int) = arg1 + arg2
+
+sun(arg2=3,arg1=2)</code></pre><h4 id="7-变长参数"><a href="#7-变长参数" class="headerlink" title="7. 变长参数"></a>7. 变长参数</h4><p>使用 vararg 修饰</p>
+<p>某个参数可以接受多个值</p>
+<p>可以不为最后一个参数</p>
+<p>如果传参是由歧义，需要使用具名参数</p>
+<h4 id="8-Spread-Operator"><a href="#8-Spread-Operator" class="headerlink" title="8. Spread Operator"></a>8. Spread Operator</h4><p>使用 * 来展开</p>
+<p>只支持展开Array</p>
+<p>只用于变长列表的实参</p>
+<pre><code>val arr=intArrayOf(1,2,3,4,5)
+
+fun printMethod(vararg arrs:Int)&#123;
+    arrs.forEach(::println)
+&#125;
+
+printMethod(*arr)
+</code></pre><h4 id="9-默认参数"><a href="#9-默认参数" class="headerlink" title="9.默认参数"></a>9.默认参数</h4><p>为函数参数指定默认值</p>
+<p>可以为任意位置的参数指定默认值</p>
+<p>传参时，如果有歧义，需要使用具名参数</p>
+<pre><code>val arr=intArrayOf(1,2,3,4,5)
+
+fun printMethod(name:String = &quot;admin&quot;,vararg arrs:Int)&#123;
+    arrs.forEach(::println)
+&#125;
+
+printMethod(arrs=*arr)</code></pre><h4 id="10-导出可执行程序"><a href="#10-导出可执行程序" class="headerlink" title="10. 导出可执行程序"></a>10. 导出可执行程序</h4><ul>
+<li>在build.gradle 中增加</li>
+</ul>
+<pre><code>apply plugin: &#39;application&#39;
+mainClassName = &quot;&quot;//程序入口类路径，Kotlin文件名后加 Kt</code></pre><ul>
+<li>gradle 刷新/同步</li>
+<li>gradle 中的distribution 中点击installDist得到可执行的文件</li>
+<li>在项目目录下的build文件夹下的install文件夹下</li>
+</ul>
+<pre><code>//命令行输入：
+# cd build/install/[项目名称]
+# chmod 755 bin/[项目名称]
+# bin/[项目名称]</code></pre>
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20181206/0151de5b59e5/">https://blog.onestravel.cn/20181206/0151de5b59e5/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20181207/c5692c65d25c/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">(二)Kotlin 面向对象 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20181123/fb0f12f8cca8/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">（六）C++中的类型转换与STL标准模板库 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81-Kotlin%E8%AF%AD%E6%B3%95"><span class="toc-text">一、 Kotlin语法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E9%87%8F"><span class="toc-text">1. 变量与常量</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%B8%B8%E9%87%8F%EF%BC%9A"><span class="toc-text">常量：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8F%98%E9%87%8F%EF%BC%9A"><span class="toc-text">变量：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A8%A1%E6%9D%BF%EF%BC%9A"><span class="toc-text">字符串模板：</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%87%BD%E6%95%B0%EF%BC%88%E5%BE%97%E5%87%BD%E6%95%B0%E8%80%85%E5%BE%97%E5%A4%A9%E4%B8%8B%EF%BC%89"><span class="toc-text">2. 函数（得函数者得天下）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-Lambda-%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-text">3. Lambda 表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E7%B1%BB%E6%88%90%E5%91%98"><span class="toc-text">3. 类成员</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-text">4. 运算符( +-*&#x2F;%^? )</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E5%BC%82%E5%B8%B8%E6%8D%95%E8%8E%B7"><span class="toc-text">5. 异常捕获</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-%E5%85%B7%E5%90%8D%E5%8F%82%E6%95%B0"><span class="toc-text">6. 具名参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-%E5%8F%98%E9%95%BF%E5%8F%82%E6%95%B0"><span class="toc-text">7. 变长参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-Spread-Operator"><span class="toc-text">8. Spread Operator</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">9.默认参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#10-%E5%AF%BC%E5%87%BA%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="toc-text">10. 导出可执行程序</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81-Kotlin%E8%AF%AD%E6%B3%95"><span class="toc-text">一、 Kotlin语法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E9%87%8F"><span class="toc-text">1. 变量与常量</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%B8%B8%E9%87%8F%EF%BC%9A"><span class="toc-text">常量：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8F%98%E9%87%8F%EF%BC%9A"><span class="toc-text">变量：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A8%A1%E6%9D%BF%EF%BC%9A"><span class="toc-text">字符串模板：</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%87%BD%E6%95%B0%EF%BC%88%E5%BE%97%E5%87%BD%E6%95%B0%E8%80%85%E5%BE%97%E5%A4%A9%E4%B8%8B%EF%BC%89"><span class="toc-text">2. 函数（得函数者得天下）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-Lambda-%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-text">3. Lambda 表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E7%B1%BB%E6%88%90%E5%91%98"><span class="toc-text">3. 类成员</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-text">4. 运算符( +-*&#x2F;%^? )</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E5%BC%82%E5%B8%B8%E6%8D%95%E8%8E%B7"><span class="toc-text">5. 异常捕获</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-%E5%85%B7%E5%90%8D%E5%8F%82%E6%95%B0"><span class="toc-text">6. 具名参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-%E5%8F%98%E9%95%BF%E5%8F%82%E6%95%B0"><span class="toc-text">7. 变长参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-Spread-Operator"><span class="toc-text">8. Spread Operator</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">9.默认参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#10-%E5%AF%BC%E5%87%BA%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="toc-text">10. 导出可执行程序</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81-Kotlin%E8%AF%AD%E6%B3%95"><span class="toc-text">一、 Kotlin语法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E9%87%8F"><span class="toc-text">1. 变量与常量</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%B8%B8%E9%87%8F%EF%BC%9A"><span class="toc-text">常量：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8F%98%E9%87%8F%EF%BC%9A"><span class="toc-text">变量：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A8%A1%E6%9D%BF%EF%BC%9A"><span class="toc-text">字符串模板：</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%87%BD%E6%95%B0%EF%BC%88%E5%BE%97%E5%87%BD%E6%95%B0%E8%80%85%E5%BE%97%E5%A4%A9%E4%B8%8B%EF%BC%89"><span class="toc-text">2. 函数（得函数者得天下）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-Lambda-%E8%A1%A8%E8%BE%BE%E5%BC%8F"><span class="toc-text">3. Lambda 表达式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E7%B1%BB%E6%88%90%E5%91%98"><span class="toc-text">3. 类成员</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-text">4. 运算符( +-*&#x2F;%^? )</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E5%BC%82%E5%B8%B8%E6%8D%95%E8%8E%B7"><span class="toc-text">5. 异常捕获</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-%E5%85%B7%E5%90%8D%E5%8F%82%E6%95%B0"><span class="toc-text">6. 具名参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-%E5%8F%98%E9%95%BF%E5%8F%82%E6%95%B0"><span class="toc-text">7. 变长参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-Spread-Operator"><span class="toc-text">8. Spread Operator</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0"><span class="toc-text">9.默认参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#10-%E5%AF%BC%E5%87%BA%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="toc-text">10. 导出可执行程序</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

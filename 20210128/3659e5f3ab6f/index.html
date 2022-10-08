@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>【笔记一】Java程序运行时，内存是如何分配的</title>
+  
+  
+  <meta property="og:title" content="【笔记一】Java程序运行时，内存是如何分配的">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20210128/3659e5f3ab6f/index.html">
+  
+  
+  <meta property="og:img" content="/medias/avatar.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2021-01-28">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="JVM">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      【笔记一】Java程序运行时，内存是如何分配的
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2021-01-28T10:09:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2021-01-28</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/Android/" class="post-meta-link">Android</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>4.1k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/JVM/" class="post-meta-link">JVM</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="【笔记一】Java程序运行时，内存是如何分配的"><a href="#【笔记一】Java程序运行时，内存是如何分配的" class="headerlink" title="【笔记一】Java程序运行时，内存是如何分配的"></a>【笔记一】Java程序运行时，内存是如何分配的</h1><p>Java 虚拟机在执行Java 程序的过程中，会把它所管理的内存划分为不同的数据区域；主要分为：<strong>程序计数器</strong>、<strong>虚拟机栈</strong>、<strong>本地方法栈</strong>、<strong>堆</strong>、<strong>方法区</strong>。</p>
+<p>下图描述一个 <code>HelloWord.java</code> 文件被加载到内存的过程：</p>
+<ul>
+<li><code>HelloWord.java</code> 首先需要经过编译器编译，生成 <code>HelloWord.class</code> 字节码文件；</li>
+<li>Java 程序中访问 <code>HelloWord</code> 这个类时，需要通过 <code>ClassLoader</code>(类加载器) 将<code>HelloWord.class</code>加载到 JVM 内存中；</li>
+<li>JVM 中的内存可以划分为若干个不同的数据区域，主要分为：程序计数器、虚拟机栈、本地方法栈、堆、方法区。</li>
+</ul>
+<img src="/images/android:jvm/java_load.png" alt="img" style="background-color:#fff;zoom:70%" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/java_load.png" class="lozad post-image">
+
+<h2 id="1-1-程序计数器（Program-Counter-Register）"><a href="#1-1-程序计数器（Program-Counter-Register）" class="headerlink" title="1.1 程序计数器（Program Counter Register）"></a>1.1 程序计数器（Program Counter Register）</h2><p>Java 程序时多线程的，CPU 可以在多个线程中分配执行时间片段，当其中一个线程被 CPU 挂起时，需要记录代码已经执行到的位置，方便 CPU 重新执行此线程时，可以知道从那一行指令开始继续执行，这就是<strong>程序计数器</strong>的作用。</p>
+<p><strong>“程序计数器”</strong> 是虚拟机中较小的一块存储空间，主要用于记录当前线程执行的位置。</p>
+<p>如下图所示：每个线程都会记录一个当前方法执行到的位置，当 CPU 切回到某一个线程时，可以根据程序计数器记录的位置，继续向下执行指令。</p>
+<img src="/images/android:jvm/program_counter_register.png" alt="img" style="zoom:100%;background-color:#fff" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/program_counter_register.png" class="lozad post-image">
+
+<p>除了上图所示的恢复线程数据之外，其他一些我们熟悉的<strong>分支操作、循环操作、跳转、异常处理等也都需要依赖程序计数器来完成</strong>。</p>
+<p>关于程序计数器需要注意的地方：</p>
+<ol>
+<li><p>在 Java 虚拟机规范中，并没有对程序计数器这一区域规定任何的 <code>OutOfMemoryError</code> 情况。</p>
+</li>
+<li><p>程序计数器是线程私有的，每个线程中都有一个程序计数器。它的生命周期随着线程的创建而创建，随着线程的结束而死亡。</p>
+</li>
+<li><p>当一个线程正在执行一个 Java 方法的时候，这个程序计数器记录的是正在执行的虚拟机字节码指令的地址。如果正在执行的是 Native 方法，这个程序计数器的值是则为空（Undefined）。</p>
+</li>
+</ol>
+<h2 id="1-2-虚拟机栈"><a href="#1-2-虚拟机栈" class="headerlink" title="1.2 虚拟机栈"></a>1.2 虚拟机栈</h2><p><strong>虚拟机栈</strong>也是线程私有的，与线程的生命周期同步。在 Java 虚拟机规范中，对各个区域规定了两种异常状况：</p>
+<ol>
+<li><strong>StackOverflowError</strong> ：当线程请求栈深度超出虚拟机栈所允许的深度时抛出。</li>
+<li><strong>OutOfMemoryError</strong> ：当 Java 虚拟机栈动态扩展到无法申请足够内存时抛出。</li>
+</ol>
+<p>在我们学习Java 虚拟机的过程中，经常会看到一句话</p>
+<p><strong>JVM 是基于栈的解释器执行的，DVM 是基于寄存器的解释器执行的。</strong></p>
+<p>上面这句话中的 『基于栈』指的就是<strong>虚拟机栈</strong>。虚拟机栈的初衷是用来描述 Java 方法执行的内存模型，每个方法被执行的时候，JVM 都会在虚拟机栈中创建一个<strong>栈帧</strong>，接下来看这个栈帧具体是什么：</p>
+<h3 id="1-2-1-栈帧"><a href="#1-2-1-栈帧" class="headerlink" title="1.2.1 栈帧"></a>1.2.1 栈帧</h3><p><strong>栈帧（Stack Frame）</strong> 是用于支持虚拟机进行方法调用和执行的数据结构，每一个线程在执行某个方法时，都会为该方法创建一个对应的栈帧。</p>
+<p>我们可以这样理解：<strong>一个线程包含多个栈帧，而每个栈帧内部包含『局部变量表』，『操作数栈』，『动态链接』『返回地址』等。</strong>如下图所示：</p>
+<p><img src="/images/android:jvm/stack_frame.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame.png" class="lozad post-image"></p>
+<h4 id="1-2-1-1-局部变量表"><a href="#1-2-1-1-局部变量表" class="headerlink" title="1.2.1.1 局部变量表"></a>1.2.1.1 局部变量表</h4><p><strong>局部变量表</strong>是变量值的存储空间，我们调用方法时传递的参数，以及在方法内部创建的局部变量都保存在 <strong>局部变量表</strong> 中。在 Java 编译成 class 文件的时候，就会在方法的 Code 属性表中的 <code>max_locals</code> 数据项中，确定该方法需要分配的最大局部变量表的容量。如下代码所示：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">int</span> k<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> j <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> i <span class="token operator">+</span> j <span class="token operator">+</span> k<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>使用 javap -v 反编译之后，得到如下字节码指令：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    descriptor<span class="token operator">:</span> <span class="token punctuation">(</span>I<span class="token punctuation">)</span>I
+    flags<span class="token operator">:</span> ACC_PUBLIC<span class="token punctuation">,</span> ACC_STATIC
+    Code<span class="token operator">:</span>
+      stack<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> locals<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> args_size<span class="token operator">=</span><span class="token number">1</span>
+         <span class="token number">0</span><span class="token operator">:</span> iconst_1
+         <span class="token number">1</span><span class="token operator">:</span> istore_1
+         <span class="token number">2</span><span class="token operator">:</span> iconst_2
+         <span class="token number">3</span><span class="token operator">:</span> istore_2
+         <span class="token number">4</span><span class="token operator">:</span> iload_1
+         <span class="token number">5</span><span class="token operator">:</span> iload_2
+         <span class="token number">6</span><span class="token operator">:</span> iadd
+         <span class="token number">7</span><span class="token operator">:</span> iload_0
+         <span class="token number">8</span><span class="token operator">:</span> iadd
+         <span class="token number">9</span><span class="token operator">:</span> ireturn
+</code></pre>
+<p>上面的 <code>locals=3</code> 代表的就是局部变量表的长度为3，也就是说经过编译之后，局部变量表的长度已经固定为3，分别保存 参数k 和 局部变量 i 、j 。</p>
+<blockquote>
+<p>注意：系统不会为局部变量表赋予初始值（实例变量和类变量都会被赋予初始值），也就是说不存在类变量那样的准备阶段。</p>
+</blockquote>
+<h4 id="1-2-1-2-操作数栈"><a href="#1-2-1-2-操作数栈" class="headerlink" title="1.2.1.2 操作数栈"></a>1.2.1.2 操作数栈</h4><p><strong>操作数栈（Operand Stack）</strong>也常称为操作栈，它是一个后入先出栈（LIFO）。</p>
+<p>同局部变量表一样，操作数栈的最大深度也是在编译的时候写入方法的 Code 属性表中的 <code>max_tacks</code> 数据项中。栈中的数据元素可以是任意的Java 数据类型，包括<code>long</code>和<code>double</code>。</p>
+<p>当一个方法刚刚开始执行时，这个方法的操作数栈时空的；在方法执行过程中，会有各种字节码的指令被压入和弹出操作数栈。比如：iadd 指令就是将操作数栈中栈顶的两个整型元素弹出，执行加法运算，并将运算结果重新压回操作数栈中。</p>
+<h4 id="1-2-1-3-动态链接"><a href="#1-2-1-3-动态链接" class="headerlink" title="1.2.1.3 动态链接"></a>1.2.1.3 动态链接</h4><p><strong>动态链接</strong> 的主要目的是为了支持方法调用过程中的动态链接（Dynamic Linking）。</p>
+<p>在一个class 文件中，一个方法调用其他方法，需要将这些方法的符号引用转化为其所在内存地址中的直接引用；而符号引用存在于<strong>方法区</strong>中。</p>
+<p>在Java虚拟机栈中，每个栈帧都包含一个指向运行时常量池中该栈中所属方法的符号引用，持有这个引用的目的就是为了支持方法调用过程中的动态链接（Dynamic Linking）。</p>
+<h4 id="1-2-1-4-返回地址"><a href="#1-2-1-4-返回地址" class="headerlink" title="1.2.1.4 返回地址"></a>1.2.1.4 返回地址</h4><p>当一个方法开始执行后，只有两种方式可以退出这个方法：</p>
+<ul>
+<li><strong>正常退出</strong> ：指方法中的代码正常完成，或者遇到任意一个方法返回的字节码指令（如return）并退出，没有抛出任何异常；</li>
+<li><strong>异常退出</strong> ：指方法执行过程中遇到异常，并且这个异常在方法体中没有得到处理，导致方法退出。</li>
+</ul>
+<p>无论当前方法采用何种方式退出，在方法退出后，都需要返回到方法被调用的位置，程序才能继续执行。而虚拟机栈中所说的<strong>返回地址</strong>就是用来帮助当前方法恢复它的上层方法执行状态。</p>
+<p>一般来说，方法正常退出时，调用者的 PC 计数值可以作为返回地址，栈帧中可能保存此计数值。而方法异常退出时，返回地址是通过异常处理表确定的，栈帧中一般不会保存此部分信息。</p>
+<p><strong>实例讲解</strong>：</p>
+<p>用一个简单的<code>add()</code> 代码来演示</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">add</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> j <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> result <span class="token operator">=</span> i <span class="token operator">+</span> j<span class="token punctuation">;</span>
+  <span class="token keyword">return</span> result <span class="token operator">+</span> <span class="token number">10</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>经过 <code>javap -v</code>之后的字节码指令如下：</p>
+<pre class=" language-java"><code class="language-java"><span class="token number">0</span><span class="token operator">:</span> iconst_1    （把常量 <span class="token number">1</span> 压入操作数栈栈顶）
+<span class="token number">1</span><span class="token operator">:</span> istore_1    （把操作数栈栈顶的出栈放入局部变量表索引为 <span class="token number">1</span> 的位置）
+<span class="token number">2</span><span class="token operator">:</span> iconst_2    （把常量 <span class="token number">2</span> 压入操作数栈栈顶）
+<span class="token number">3</span><span class="token operator">:</span> istore_2    （把操作数栈栈顶的出栈放入局部变量表索引为 <span class="token number">2</span> 的位置）
+<span class="token number">4</span><span class="token operator">:</span> iload_1     （把局部变量表索引为 <span class="token number">1</span> 的值放入操作数栈栈顶）
+<span class="token number">5</span><span class="token operator">:</span> iload_2     （把局部变量表索引为 <span class="token number">2</span> 的值放入操作数栈栈顶）
+<span class="token number">6</span><span class="token operator">:</span> iadd        （将操作数栈栈顶的和栈顶下面的一个进行加法运算后放入栈顶）
+<span class="token number">7</span><span class="token operator">:</span> istore_3    （把操作数栈栈顶的出栈放入局部变量表索引为 <span class="token number">3</span> 的位置）
+<span class="token number">8</span><span class="token operator">:</span> iload_3     （把局部变量表索引为 <span class="token number">3</span> 的值放入操作数栈栈顶）
+<span class="token number">9</span><span class="token operator">:</span> bipush <span class="token number">10</span>   （把常量 <span class="token number">10</span> 压入操作数栈栈顶）
+<span class="token number">11</span><span class="token operator">:</span> iadd       （将操作数栈栈顶的和栈顶下面的一个进行加法运算后放入栈顶）
+<span class="token number">12</span><span class="token operator">:</span> ireturn    （结束）</code></pre>
+<p>可以看到：<strong>局部变量表</strong>和<strong>操作数栈</strong>在代码执行期间是协同合作来达到某一运算效果的。接下来通过图示来看下这几行代码执行期间，虚拟机栈的实际情况。</p>
+<ul>
+<li>iconst 和 bipush，这两个指令都是将常量压入操作数栈顶，区别就是：当 int 取值 -1<del>5 采用 iconst 指令，取值 -128</del>127 采用 bipush 指令。</li>
+<li>istore 将操作数栈顶的元素放入局部变量表的某索引位置，比如 istore_5 代表将操作数栈顶元素放入局部变量表下标为 5 的位置。</li>
+<li>iload 将局部变量表中某下标上的值加载到操作数栈顶中，比如 iload_2 代表将局部变量表索引为 2 上的值压入操作数栈顶。</li>
+<li>iadd 代表加法运算，具体是将操作数栈最上方的两个元素进行相加操作，然后将结果重新压入栈顶。</li>
+</ul>
+<p>首先在 .java 文件被编译成 .class 文件的时候，<strong>栈帧中需要多大的局部变量表，多深的操作数栈都已经完全确定了，并且写入到的方法的Code 属性中</strong>。因此这会局部变量表的大小是确定的，add() 方法中有3 个局部变量，因此局部变量表大小为3，但是操作数栈此时为空。</p>
+<p>所以刚刚执行到 add() 方法时，局部变量表和操作数栈的情况如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_1.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_1.png" class="lozad post-image">
+
+<p>iconst_1 将常量1压入操作数栈顶，结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_2.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_2.png" class="lozad post-image">
+
+<p>istore_1 把操作数栈顶的元素出栈并放入局部变量表下标为 1 的位置，结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_3.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_3.png" class="lozad post-image">
+
+<p>可以看出此时操作数栈重新变为空，并将出栈的元素 1 保存在局部变量表中。</p>
+<p>iconst_2 把常量 2 压入操作数栈顶，结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_4.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_4.png" class="lozad post-image">
+
+<p>istore_2 把操作数栈顶的元素出栈并放入局部变量表下标为 2 的位置，结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_5.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_5.png" class="lozad post-image">
+
+<p>接下来是两步 iload 操作，分别是 iload_1 和 iload_2。分别代表的是将局部变量表中下标为 1 和下标为 2 的元素重新压入操作数栈中，结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_6.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_6.png" class="lozad post-image">
+
+<p>接下来进行 iadd 操作，这个操作会将栈顶最上方的两个元素（也就是 1、2）进行加法操作，然后将结果重新压入到栈顶，执行完之后的结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_7.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_7.png" class="lozad post-image">
+
+<p>istor_3 将操作数栈顶的元素出栈，并保存在局部变量表下标为 3 的位置。结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_8.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_8.png" class="lozad post-image">
+
+<p>iload_3 将局部变量表中下标为 3 的元素重新压入到操作数栈顶，结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_9.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_9.png" class="lozad post-image">
+
+<p>bipush 10 将常量 10 压入到操作数栈中，结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_10.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_10.png" class="lozad post-image">
+
+<p>再次执行 iadd 操作，注意此时栈顶最上方的两个元素为 3 和 10，所以执行完结果如下：</p>
+<img src="/images/android:jvm/stack_frame_eg_11.png" alt="img" style="zoom:80%;background-color:#fff;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/stack_frame_eg_11.png" class="lozad post-image">
+
+<p>最后执行 return 指令，将操作数栈顶的元素 13 返回给上层方法。至此 add() 方法执行完毕。局部变量表和操作数栈也会相继被销毁。</p>
+<h2 id="1-3-本地方法栈"><a href="#1-3-本地方法栈" class="headerlink" title="1.3 本地方法栈"></a>1.3 本地方法栈</h2><p>本地方法栈和上面所讲的虚拟机栈基本相同，只不过是针对本地（Native）方法。如果在开发中涉及 JNI 可能接触本地方法栈多一点。有些虚拟机的实现已经将两个栈合二为一了（比如HotSpot）。</p>
+<h2 id="1-4-堆"><a href="#1-4-堆" class="headerlink" title="1.4 堆"></a>1.4 堆</h2><p>Java 堆（Heap）是 JVM 所管理的内存区域中最大的一块，该区域唯一的目的就是存放对象实例，几乎所有对象的实例都在堆里面分配，因此它也是 Java 垃圾收集器（GC）管理的主要区域，有时也叫 GC 堆。同时，它也是所有线程共享的内存区域，因此被分配在此区域的对象被多个线程访问的话，需要考虑线程安全问题。</p>
+<p>按照对象存储时间的不同，堆中的内存可以划分为<strong>新生代（Young）</strong>和<strong>老年代（Old）</strong>，其中新生代又被划分为 <code>Eden</code> 和 <code>Survivor</code> 区。</p>
+<img src="/images/android:jvm/heap.png" alt="img" style="zoom:80%;" / srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/heap.png" class="lozad post-image">
+
+<p>图中不同的存放区域具有不同的生命周期的对象。这样可以根据不同的区域使用不同的垃圾回收算法，从而更具有针对性，进而提高垃圾回收效率。</p>
+<h2 id="1-5-方法区"><a href="#1-5-方法区" class="headerlink" title="1.5 方法区"></a>1.5 方法区</h2><p>方法区（Method Area）是 JVM 规范中规定的一块运行时数据区。方法区主要时存储已经被 JVM 加载的类信息（版本、字段、方法、接口）、常量、静态变量、即时编译器编译后的代码和数据。该区域和堆一样，也是被各个线程共享的内存区域。</p>
+<blockquote>
+<p><strong>注意</strong>：关于方法区很多开发者会将其跟『永久区』混淆。</p>
+<ol>
+<li>方法区是 JVM 规范中规定的一块内存区域，但并不是实际实现，切记将规范和实现混为一谈，不同的 JVM 厂商可以有不同版本的『方法区』的实现。</li>
+<li>HotSpot 在 JDK 1.7 之前使用『永久区』（或者叫 <code>Perm</code> 区）来实现<strong>方法区</strong> ，在JDK 1.8 之后『永久区』就被移除掉了，取而代之的是一个叫做 『元空间（metaspace）』的实现方式。</li>
+</ol>
+</blockquote>
+<p>总结一下就是：</p>
+<pre><code>1. 方法区是规范层面的东西，规定了这一区域要存放哪些数据。
+2. 永久区或者metaspace是堆方法区的不同的实现，是实现层面的东西。</code></pre><h2 id="1-6-异常情况"><a href="#1-6-异常情况" class="headerlink" title="1.6 异常情况"></a>1.6 异常情况</h2><h3 id="1-6-1-StackOverflowError-栈溢出异常"><a href="#1-6-1-StackOverflowError-栈溢出异常" class="headerlink" title="1.6.1 StackOverflowError 栈溢出异常"></a>1.6.1 StackOverflowError 栈溢出异常</h3><p>递归调用是造成 <code>StackOverflowError</code> 的一个常见场景，如以下代码：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">StackOver</span><span class="token punctuation">{</span>
+  <span class="token keyword">private</span> <span class="token keyword">int</span> number<span class="token punctuation">;</span>
+
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    StackOver so <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">StackOver</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">try</span><span class="token punctuation">{</span>
+      so<span class="token punctuation">.</span><span class="token function">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token keyword">catch</span><span class="token punctuation">(</span>Exception e<span class="token punctuation">)</span><span class="token punctuation">{</span>
+      System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"出现栈溢出"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+
+
+  <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    number<span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token function">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>在method方法中，递归调用了自身，并且没有设置递归结束条件。运行上述代码时，则会产生StackOverflowError。</p>
+<p>原因就是每调用一次method方法时，都会在虚拟机栈中创建出一个栈帧。因为是递归调用，method方法并不会退出，也不会将栈帧销毁，所以必然会导致StackOverflowError。因此当需要使用递归时，需要格外谨慎。</p>
+<h3 id="1-6-2-OutOfMemeryError-内存溢出异常"><a href="#1-6-2-OutOfMemeryError-内存溢出异常" class="headerlink" title="1.6.2  OutOfMemeryError 内存溢出异常"></a>1.6.2  OutOfMemeryError 内存溢出异常</h3><p>理论上，虚拟机栈、堆、方法区都有可能发生 <code>OutOfMemeryError</code> ，但是实际项目中，大多数发生在堆当中。如以下代码：</p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>ArraryList<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HeapError</span><span class="token punctuation">{</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    ArraryList<span class="token operator">&lt;</span>HeapError<span class="token operator">></span> list <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ArraryList</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+      list<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">HeapError</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>在一个无限循环中，动态向ArrayList 中添加新的 HeapError 对象。这会不断的占用堆中的内存，当堆内存不够用时，必然会产生 <code>OutOfMemeryError</code> ，也就是内存溢出异常。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>对应 JVM 运行时内存分布，我们要记住，上面介绍的这 5 点都是在 Java 虚拟机规范中定义的规则，这些规则只是描述了各个区域做什么事情，存储什么样的数据，如何处理异常以及是否允许线程间共享等，<strong>不要理解成虚拟机的『具体实现』</strong>。</p>
+<p>虚拟机的具体实现又很多，比如Sun 公司的 <code>HotSpot</code>,<code>JRocket</code>,<code>IBM J9</code> 以及 Android Dalvik 和 ART 等。这些具体实现，在符合上面5中运行时数据区的前提下，又各自有不同的实现方式。</p>
+<p><img src="/images/android:jvm/jvm_end.png" alt="img" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/android:jvm/jvm_end.png" class="lozad post-image"></p>
+<p>总的来说，JVM 的运行时内存结构中一共有两个“栈”和一个“堆”，分别是：Java 虚拟机栈和本地方法栈，以及“GC堆”和方法区。除此之外还有一个程序计数器。 JVM 内存中只有堆和方法区是线程共享的数据区域，其它区域都是线程私有的。并且程序计数器是唯一一个在 Java 虚拟机规范中没有规定任何 OutOfMemoryError 情况的区域。</p>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20210128/3659e5f3ab6f/">https://blog.onestravel.cn/20210128/3659e5f3ab6f/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20210328/68b72d473df5/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">【笔记二】GC 回收机制和分代回收策略 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20200403/5d609221eb6a/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">Glide-4.11.0 浅析 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%B8%80%E3%80%91Java%E7%A8%8B%E5%BA%8F%E8%BF%90%E8%A1%8C%E6%97%B6%EF%BC%8C%E5%86%85%E5%AD%98%E6%98%AF%E5%A6%82%E4%BD%95%E5%88%86%E9%85%8D%E7%9A%84"><span class="toc-text">【笔记一】Java程序运行时，内存是如何分配的</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8%EF%BC%88Program-Counter-Register%EF%BC%89"><span class="toc-text">1.1 程序计数器（Program Counter Register）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88"><span class="toc-text">1.2 虚拟机栈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-1-%E6%A0%88%E5%B8%A7"><span class="toc-text">1.2.1 栈帧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-1-%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8"><span class="toc-text">1.2.1.1 局部变量表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-2-%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88"><span class="toc-text">1.2.1.2 操作数栈</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-3-%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-text">1.2.1.3 动态链接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-4-%E8%BF%94%E5%9B%9E%E5%9C%B0%E5%9D%80"><span class="toc-text">1.2.1.4 返回地址</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-3-%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%A0%88"><span class="toc-text">1.3 本地方法栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-4-%E5%A0%86"><span class="toc-text">1.4 堆</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-5-%E6%96%B9%E6%B3%95%E5%8C%BA"><span class="toc-text">1.5 方法区</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-6-%E5%BC%82%E5%B8%B8%E6%83%85%E5%86%B5"><span class="toc-text">1.6 异常情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-6-1-StackOverflowError-%E6%A0%88%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="toc-text">1.6.1 StackOverflowError 栈溢出异常</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-6-2-OutOfMemeryError-%E5%86%85%E5%AD%98%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="toc-text">1.6.2  OutOfMemeryError 内存溢出异常</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%B8%80%E3%80%91Java%E7%A8%8B%E5%BA%8F%E8%BF%90%E8%A1%8C%E6%97%B6%EF%BC%8C%E5%86%85%E5%AD%98%E6%98%AF%E5%A6%82%E4%BD%95%E5%88%86%E9%85%8D%E7%9A%84"><span class="toc-text">【笔记一】Java程序运行时，内存是如何分配的</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8%EF%BC%88Program-Counter-Register%EF%BC%89"><span class="toc-text">1.1 程序计数器（Program Counter Register）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88"><span class="toc-text">1.2 虚拟机栈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-1-%E6%A0%88%E5%B8%A7"><span class="toc-text">1.2.1 栈帧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-1-%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8"><span class="toc-text">1.2.1.1 局部变量表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-2-%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88"><span class="toc-text">1.2.1.2 操作数栈</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-3-%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-text">1.2.1.3 动态链接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-4-%E8%BF%94%E5%9B%9E%E5%9C%B0%E5%9D%80"><span class="toc-text">1.2.1.4 返回地址</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-3-%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%A0%88"><span class="toc-text">1.3 本地方法栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-4-%E5%A0%86"><span class="toc-text">1.4 堆</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-5-%E6%96%B9%E6%B3%95%E5%8C%BA"><span class="toc-text">1.5 方法区</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-6-%E5%BC%82%E5%B8%B8%E6%83%85%E5%86%B5"><span class="toc-text">1.6 异常情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-6-1-StackOverflowError-%E6%A0%88%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="toc-text">1.6.1 StackOverflowError 栈溢出异常</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-6-2-OutOfMemeryError-%E5%86%85%E5%AD%98%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="toc-text">1.6.2  OutOfMemeryError 内存溢出异常</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E3%80%90%E7%AC%94%E8%AE%B0%E4%B8%80%E3%80%91Java%E7%A8%8B%E5%BA%8F%E8%BF%90%E8%A1%8C%E6%97%B6%EF%BC%8C%E5%86%85%E5%AD%98%E6%98%AF%E5%A6%82%E4%BD%95%E5%88%86%E9%85%8D%E7%9A%84"><span class="toc-text">【笔记一】Java程序运行时，内存是如何分配的</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8%EF%BC%88Program-Counter-Register%EF%BC%89"><span class="toc-text">1.1 程序计数器（Program Counter Register）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88"><span class="toc-text">1.2 虚拟机栈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-1-%E6%A0%88%E5%B8%A7"><span class="toc-text">1.2.1 栈帧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-1-%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8"><span class="toc-text">1.2.1.1 局部变量表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-2-%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88"><span class="toc-text">1.2.1.2 操作数栈</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-3-%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-text">1.2.1.3 动态链接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-1-4-%E8%BF%94%E5%9B%9E%E5%9C%B0%E5%9D%80"><span class="toc-text">1.2.1.4 返回地址</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-3-%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%A0%88"><span class="toc-text">1.3 本地方法栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-4-%E5%A0%86"><span class="toc-text">1.4 堆</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-5-%E6%96%B9%E6%B3%95%E5%8C%BA"><span class="toc-text">1.5 方法区</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-6-%E5%BC%82%E5%B8%B8%E6%83%85%E5%86%B5"><span class="toc-text">1.6 异常情况</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-6-1-StackOverflowError-%E6%A0%88%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="toc-text">1.6.1 StackOverflowError 栈溢出异常</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-6-2-OutOfMemeryError-%E5%86%85%E5%AD%98%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="toc-text">1.6.2  OutOfMemeryError 内存溢出异常</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

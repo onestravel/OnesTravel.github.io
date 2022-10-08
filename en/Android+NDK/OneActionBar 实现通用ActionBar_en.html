@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>一个人的旅行</title>
+  
+  
+  <meta property="og:title" content="一个人的旅行">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/en/Android+NDK/OneActionBar%20%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8ActionBar_en.html">
+  
+  
+  <meta property="og:img" content="/medias/avatar.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    Home
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    Archive
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    Tags
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    Categories
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    About
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    Friends
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2022-10-08T06:58:30.564Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2022-10-08</span>
+    </time>
+    
+    
+    <span class="dot"></span>
+    <span>747 words</span>
+    
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="OneActionBar-Instructions-for-use"><a href="#OneActionBar-Instructions-for-use" class="headerlink" title="OneActionBar Instructions for use"></a><a target="_blank" rel="noopener" href="https://github.com/onestravel/OneActionBar">OneActionBar</a> Instructions for use</h1><p><a href="/20190825/android-ndk/oneactionbar-shi-xian-tong-yong-actionbar">中文文档</a> </p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>*<em>Custom ActionBar, support attribute, java code mode configuration, can realize title, title with return key, search, search ActionBar with return key; simple configuration, convenient to use, can adapt to most scenes. *</em></p>
+<h2 id="renderings"><a href="#renderings" class="headerlink" title="renderings"></a>renderings</h2><p>###<img src="/images/20190825/image-20190915194738463.png" alt="效果图" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="/images/20190825/image-20190915194738463.png" class="lozad post-image"></p>
+<ol>
+<li>Standard header, transparent background <code>style=&quot;@style/OneActionBar.Normal&quot;</code></li>
+<li>Standard heading, blue background <code>style=&quot;@style/OneActionBar.Normal.Blue&quot;</code></li>
+<li>With return key header, transparent background <code>style=&quot;@style/OneActionBar.Back&quot;</code></li>
+<li>With the return key head, blue background <code>style=&quot;@style/OneActionBar.Back.Blue&quot;</code></li>
+<li>With search box header, transparent background <code>style=&quot;@style/OneActionBar.Search&quot;</code></li>
+<li>With search box header, blue background ``style=”@style/OneActionBar.Search.Blue”</li>
+<li>Search box with return key header, transparent background <code>style=&quot;@style/OneActionBar.Back.Search&quot;</code></li>
+<li>Search box with return key header, blue background <code>style=&quot;@style/OneActionBar.Back.Search.Blue&quot;</code></li>
+</ol>
+<h2 id="Introduction-method"><a href="#Introduction-method" class="headerlink" title="Introduction method"></a>Introduction method</h2><p>TAG: <a target="_blank" rel="noopener" href="https://jitpack.io/#onestravel/OneActionBar"><img src="https://jitpack.io/v/onestravel/OneActionBar.svg" alt="" srcset="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" data-src="https://jitpack.io/v/onestravel/OneActionBar.svg" class="lozad post-image"></a></p>
+<h4 id="gradle"><a href="#gradle" class="headerlink" title="gradle"></a>gradle</h4><ul>
+<li>Add the following configuration to build.gradle (same level as model) in the root directory of the project</li>
+</ul>
+<pre><code>Allprojects &#123;
+Repositories &#123;
+...
+Maven &#123; url &#39;https://jitpack.io&#39; &#125;
+&#125;
+&#125;
+</code></pre><ul>
+<li>Add dependencies in build.gradle in model</li>
+</ul>
+<pre><code>Dependencies &#123;
+Implementation &#39;com.github.onestravel:OneActionBar:TAG&#39;
+&#125;
+</code></pre><h2 id="Attribute-Description"><a href="#Attribute-Description" class="headerlink" title="Attribute Description"></a>Attribute Description</h2><table>
+<thead>
+<tr>
+<th>Property Name</th>
+<th>Field Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>app:barBackColor</td>
+<td>ActionBar Returns the color of the key, the color of the icon and the font</td>
+<td>app:barBackColor=”#000000”</td>
+</tr>
+<tr>
+<td>app:barBackIconWidth</td>
+<td>ActionBar Returns the width of the key icon</td>
+<td>app:barBackIconWidth=”25dp”</td>
+</tr>
+<tr>
+<td>app:barBackIconHeight</td>
+<td>ActionBar Returns the height of the key icon</td>
+<td>app:barBackIconHeight=”25dp”</td>
+</tr>
+<tr>
+<td>app:barBackText</td>
+<td>ActionBar back key text</td>
+<td>app:barBackText=”return”</td>
+</tr>
+<tr>
+<td>app:barBackTextSize</td>
+<td>ActionBar back key text size</td>
+<td>app:barBackTextSize=”13sp”</td>
+</tr>
+<tr>
+<td>app:barTitle</td>
+<td>ActionBar Headline Text</td>
+<td>app:barTitle=”Home”</td>
+</tr>
+<tr>
+<td>app:barTitleColor</td>
+<td>ActionBar Header Text Color</td>
+<td>app:barTitleColor=”#000000”</td>
+</tr>
+<tr>
+<td>app:barTitleSize</td>
+<td>ActionBar Header Text Size</td>
+<td>app:barTitleSize=”22sp”</td>
+</tr>
+<tr>
+<td>app:barType</td>
+<td>ActionBar style, there are four styles in total: TYPE_NORMAL (normal style), TYPE_BACK (normal with return key style), TYPE_SEARCH (search style), TYPE_BACK_SEARCH (with return key search style),</td>
+<td>app:barType=” TYPE_NORMAL”</td>
+</tr>
+<tr>
+<td>app:barActionBtnColor</td>
+<td>ActionBar Right side action button icon/text color</td>
+<td>app:barActionBtnColor=”#FF0000”</td>
+</tr>
+<tr>
+<td>app:barActionBtnText</td>
+<td>ActionBar Right side action button text</td>
+<td>app:barActionBtnText=”Next”</td>
+</tr>
+<tr>
+<td>app:barActionBtnTextSize</td>
+<td>ActionBar title action button text size</td>
+<td>app:barActionBtnTextSize=”15sp”</td>
+</tr>
+<tr>
+<td>app:barBottomLineWidth</td>
+<td>The width of the split line at the bottom of the ActionBar</td>
+<td>app:barBottomLineWidth=”1dp”</td>
+</tr>
+<tr>
+<td>app:barBottomLineColor</td>
+<td>The color of the bottom line of the ActionBar</td>
+<td>app:barBottomLineColor=”#1a1a1a”</td>
+</tr>
+<tr>
+<td>app:barActionBtnIcon</td>
+<td>ActionBar Right side action button icon</td>
+<td>app:barActionBtnIcon=”@drawable/icon_next”</td>
+</tr>
+<tr>
+<td>app:barActionBtnIconWidth</td>
+<td>ActionBar Title Action Button Width</td>
+<td>app:barActionBtnIconWidth=”25dp”</td>
+</tr>
+<tr>
+<td>app:barActionBtnIconHeight</td>
+<td>ActionBar The right side of the action button height</td>
+<td>app:barActionBtnIconHeight=”25dp”</td>
+</tr>
+<tr>
+<td>app:barSearchBackground</td>
+<td>ActionBar Search Style Background</td>
+<td>app:barSearchBackground=”#FFFFFF”</td>
+</tr>
+<tr>
+<td>app:barSearchHint</td>
+<td>ActionBar search style search box hint text</td>
+<td>app:barSearchHint=”Please enter search content”</td>
+</tr>
+<tr>
+<td>app:barSearchText</td>
+<td>ActionBar Search Style Search Box Text</td>
+<td>app:barSearchText=”Today News”</td>
+</tr>
+<tr>
+<td>app:barSearchHintColor</td>
+<td>ActionBar Search Style Search Box Tip Text Color</td>
+<td>app:barSearchHintColor=”#E1E1E1”</td>
+</tr>
+<tr>
+<td>app:barSearchTextColor</td>
+<td>ActionBar Search Style Search Box Text Color</td>
+<td>app:barSearchTextColor=”#000000”</td>
+</tr>
+<tr>
+<td>app:barSearchTextSize</td>
+<td>ActionBar Search Style Search Box Text Size</td>
+<td>app:barSearchTextSize=”20sp”</td>
+</tr>
+<tr>
+<td>android:background</td>
+<td>ActionBar background color</td>
+<td>android:background=”#FFFFFF”</td>
+</tr>
+</tbody></table>
+<h2 id="Style-Description"><a href="#Style-Description" class="headerlink" title="Style Description"></a>Style Description</h2><p>According to the image effect, the first custom style description is as follows</p>
+<p>Note: The label corresponds to the picture effect number</p>
+<ol>
+<li>Standard header, transparent background <code>style=&quot;@style/OneActionBar.Normal&quot;</code></li>
+<li>Standard heading, blue background <code>style=&quot;@style/OneActionBar.Normal.Blue&quot;</code></li>
+<li>With return key header, transparent background <code>style=&quot;@style/OneActionBar.Back&quot;</code></li>
+<li>With the return key head, blue background <code>style=&quot;@style/OneActionBar.Back.Blue&quot;</code></li>
+<li>With search box header, transparent background <code>style=&quot;@style/OneActionBar.Search&quot;</code></li>
+<li>With search box header, blue background ``style=”@style/OneActionBar.Search.Blue”</li>
+<li>Search box with return key header, transparent background <code>style=&quot;@style/OneActionBar.Back.Search&quot;</code></li>
+<li>Search box with return key header, blue background <code>style=&quot;@style/OneActionBar.Back.Search.Blue&quot;</code></li>
+</ol>
+<h2 id="example"><a href="#example" class="headerlink" title="example"></a>example</h2><ol>
+<li>layout xml</li>
+</ol>
+<pre class=" language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>cn.onestravel.one.actionbar.OneActionBar</span><span class="token style-attr language-css"><span class="token attr-name">
+        <span class="token attr-name">Style</span></span><span class="token punctuation">="</span><span class="token attr-value">@style/OneActionBar<span class="token number">.</span>Back<span class="token number">.</span>Blue</span><span class="token punctuation">"</span></span>
+        <span class="token attr-name"><span class="token namespace">Android:</span>layout_width</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>match_parent<span class="token punctuation">"</span></span>
+        <span class="token attr-name"><span class="token namespace">Android:</span>layout_height</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>50dp<span class="token punctuation">"</span></span>
+        <span class="token attr-name"><span class="token namespace">App:</span>barActionBtnText</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>Next<span class="token punctuation">"</span></span>
+        <span class="token attr-name"><span class="token namespace">App:</span>barTitle</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>Questionnaire<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+<ol start="2">
+<li>style</li>
+</ol>
+<pre class=" language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>style</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>OneActionBar.Back<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token style language-css">
+               &lt;item name=<span class="token string">"barTitleSize"</span>><span class="token number">22</span>sp&lt;/item>
+        &lt;item name=<span class="token string">"barActionBtnTextSize"</span>><span class="token number">16</span>sp&lt;/item>
+        &lt;item name=<span class="token string">"barType"</span>>TYPE_BACK&lt;/item>
+        &lt;item name=<span class="token string">"barBackTextSize"</span>><span class="token number">14</span>sp&lt;/item>
+        &lt;item name=<span class="token string">"barBackText"</span>>Back&lt;/item>
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>style</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>style</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>OneActionBar.Back.Blue<span class="token punctuation">"</span></span> <span class="token attr-name">parent</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>OneActionBar.Back<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token style language-css">
+    &lt;item name=<span class="token string">"android:background"</span>><span class="token hexcode">#0080ff</span>&lt;/item>
+    &lt;item name=<span class="token string">"barBackColor"</span>>@<span class="token property">android</span><span class="token punctuation">:</span>color/white&lt;/item>
+    &lt;item name=<span class="token string">"barTitleColor"</span>>@<span class="token property">android</span><span class="token punctuation">:</span>color/white&lt;/item>
+    &lt;item name=<span class="token string">"barActionBtnColor"</span>>@<span class="token property">android</span><span class="token punctuation">:</span>color/white&lt;/item>
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>style</span><span class="token punctuation">></span></span></code></pre>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/en/Android+NDK/OneActionBar%20%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8ActionBar_en.html">https://blog.onestravel.cn/en/Android+NDK/OneActionBar%20%E5%AE%9E%E7%8E%B0%E9%80%9A%E7%94%A8ActionBar_en.html</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>TOC</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#OneActionBar-Instructions-for-use"><span class="toc-text">OneActionBar Instructions for use</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Introduction"><span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#renderings"><span class="toc-text">renderings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Introduction-method"><span class="toc-text">Introduction method</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#gradle"><span class="toc-text">gradle</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Attribute-Description"><span class="toc-text">Attribute Description</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Style-Description"><span class="toc-text">Style Description</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#example"><span class="toc-text">example</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>Posts</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>Categories</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>Tags</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>Categories</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>hot tags</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+  <article class="card card-content widescreen-archive archive-widget">
+    <div class="archive-card">
+  <div class="archive-card-header"><i class="iconfont icon-wodebaobiao" style="padding-right: 2px;"></i>Archive</div>
+  <div class="archive-card-list">
+    
+    
+    
+      
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2021" class="archive-card-list-item">
+              2021
+              <span class="archive-card-list-item-badge">5</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2020" class="archive-card-list-item">
+              2020
+              <span class="archive-card-list-item-badge">2</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2019" class="archive-card-list-item">
+              2019
+              <span class="archive-card-list-item-badge">25</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2018" class="archive-card-list-item">
+              2018
+              <span class="archive-card-list-item-badge">32</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2017" class="archive-card-list-item">
+              2017
+              <span class="archive-card-list-item-badge">3</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+    
+      <a href="/archives/2016" class="archive-card-list-item">
+          2016
+          <span class="archive-card-list-item-badge">2</span>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>Recent Posts</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="archive-card">
+  <div class="archive-card-header"><i class="iconfont icon-wodebaobiao" style="padding-right: 2px;"></i>Archive</div>
+  <div class="archive-card-list">
+    
+    
+    
+      
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2021" class="archive-card-list-item">
+              2021
+              <span class="archive-card-list-item-badge">5</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2020" class="archive-card-list-item">
+              2020
+              <span class="archive-card-list-item-badge">2</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2019" class="archive-card-list-item">
+              2019
+              <span class="archive-card-list-item-badge">25</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2018" class="archive-card-list-item">
+              2018
+              <span class="archive-card-list-item-badge">32</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2017" class="archive-card-list-item">
+              2017
+              <span class="archive-card-list-item-badge">3</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+    
+      <a href="/archives/2016" class="archive-card-list-item">
+          2016
+          <span class="archive-card-list-item-badge">2</span>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

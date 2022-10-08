@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>JNI 的数据类型</title>
+  
+  
+  <meta property="og:title" content="JNI 的数据类型">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/20180920/b92bc69386ee/index.html">
+  
+  
+  <meta property="og:img" content="/images/20180915/jni.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  <meta property="og:type" content="article">
+  <meta property="og:article:published_time" content="2018-09-20">
+  <meta property="og:article:modified_time" content="2022-10-08">
+  <meta property="og:article:author" content="一个人的旅行">
+  
+  
+  <meta property="og:article:tag" content="Android">
+  
+  <meta property="og:article:tag" content="JNI">
+  
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+<link rel="stylesheet" href="/js/lib/lightbox/baguetteBox.min.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="image-wrapper">
+  <img src="/images/20180915/jni.jpg" data-src="/images/20180915/jni.jpg"
+    srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+    class="image lozad"
+    alt="thumbnail"
+  >
+</div>
+
+<article class="card card-content">
+  <header>
+    <h1 class="post-title">
+      JNI 的数据类型
+    </h1>
+  </header>
+  <div class="post-meta post-show-meta">
+    <time datetime="2018-09-20T01:25:00.000Z">
+      <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+      <span>2018-09-20</span>
+    </time>
+    
+    <span class="dot"></span>
+    
+    <a href="/categories/JNI/" class="post-meta-link">JNI</a>
+    
+    
+    
+    <span class="dot"></span>
+    <span>3k 字</span>
+    
+  </div>
+  
+  <div class="post-meta post-show-meta" style="margin-top: -10px;">
+    <div style="display: flex; align-items: center;">
+      <i class="iconfont icon-biaoqian" style="margin-right: 2px; font-size: 1.15rem;"></i>
+      
+      
+        <a href="/tags/Android/" class="post-meta-link">Android</a>
+      
+      
+      <span class="dot"></span>
+      
+        <a href="/tags/JNI/" class="post-meta-link">JNI</a>
+      
+    </div>
+  </div>
+  
+  </header>
+  <div id="section" class="post-content">
+    <h1 id="JNI-的数据类型"><a href="#JNI-的数据类型" class="headerlink" title="JNI 的数据类型"></a>JNI 的数据类型</h1><h2 id="一、JNI-数据类型"><a href="#一、JNI-数据类型" class="headerlink" title="一、JNI 数据类型"></a>一、JNI 数据类型</h2><p><strong>Java基本数据类型与JNI数据类型的映射关系</strong></p>
+<table>
+<thead>
+<tr>
+<th>Java数据类型</th>
+<th>JNI数据类型</th>
+<th>C/C++数据类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>boolean</td>
+<td>jboolean</td>
+<td>unsigned char</td>
+</tr>
+<tr>
+<td>byte</td>
+<td>jbyte</td>
+<td>signed char</td>
+</tr>
+<tr>
+<td>char</td>
+<td>jchar</td>
+<td>unsigned short</td>
+</tr>
+<tr>
+<td>short</td>
+<td>jshort</td>
+<td>short</td>
+</tr>
+<tr>
+<td>int</td>
+<td>jint</td>
+<td>int</td>
+</tr>
+<tr>
+<td>long</td>
+<td>jlong</td>
+<td>long long</td>
+</tr>
+<tr>
+<td>float</td>
+<td>jfloat</td>
+<td>float</td>
+</tr>
+<tr>
+<td>double</td>
+<td>jdouble</td>
+<td>double</td>
+</tr>
+<tr>
+<td>void</td>
+<td>void</td>
+<td>void</td>
+</tr>
+</tbody></table>
+<p><strong>Java引用数据类型与JNI数据类型的映射关系</strong></p>
+<table>
+<thead>
+<tr>
+<th>Java数据类型</th>
+<th>JNI数据类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>String</td>
+<td>jstring</td>
+</tr>
+<tr>
+<td>Object</td>
+<td>jobject</td>
+</tr>
+<tr>
+<td>基本数据类型数组如： byte[]</td>
+<td>jbyteArray</td>
+</tr>
+<tr>
+<td>对象数组如： Object[],String[]</td>
+<td>jobjectArray</td>
+</tr>
+</tbody></table>
+<h2 id="二、C通过JNI调用Java"><a href="#二、C通过JNI调用Java" class="headerlink" title="二、C通过JNI调用Java"></a>二、C通过JNI调用Java</h2><h3 id="1、访问Java属性"><a href="#1、访问Java属性" class="headerlink" title="1、访问Java属性"></a>1、访问Java属性</h3><p><strong>GET<Type>Field</strong></p>
+<ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+    public String key = &quot;World!&quot;;
+    //访问属性，返回修改之后的属性内容
+    public native String accessField();
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        System.out.println(&quot;key修改前：&quot;+t.key);
+        t.accessField();
+        System.out.println(&quot;key修改后：&quot;+t.key);
+    &#125;
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法</li>
+</ul>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    accessField
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_example_jni_JNITest_accessField
+(JNIEnv *, jobject);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+
+JNIEXPORT jstring JNICALL Java_com_example_jni_JNITest_accessField
+(JNIEnv *jEnv, jobject jobj) &#123;
+    //jobj是t对象，JniTest.class
+    jclass cls = (*jEnv)-&gt;GetObjectClass(jEnv, jobj);
+    //jfieldID
+    //属性名称，属性签名
+    jfieldID fid = (*jEnv)-&gt;GetFieldID(jEnv, cls, &quot;key&quot;, &quot;Ljava/lang/String;&quot;);
+
+    //World! &gt;&gt; Hello World!
+    //获取key属性的值
+    //Get&lt;Type&gt;Field
+    jstring jstr = (*jEnv)-&gt;GetObjectField(jEnv, jobj, fid);
+    printf(&quot;jstr:%#x\n&quot;, &amp;jstr);
+
+    //jstring -&gt; c字符串
+    //isCopy 是否复制（true代表复制，false不复制）
+    char *c_str = (*jEnv)-&gt;GetStringUTFChars(jEnv, jstr, NULL);
+    //拼接得到新的字符串
+    char text[20] = &quot;Hello &quot;;
+    strcat(text, c_str);
+
+    //c字符串 -&gt;jstring
+    jstring new_jstr = (*jEnv)-&gt;NewStringUTF(jEnv, text);
+
+    //修改key
+    //Set&lt;Type&gt;Field
+    (*jEnv)-&gt;SetObjectField(jEnv, jobj, fid, new_jstr);
+
+    printf(&quot;new_jstr:%#x\n&quot;, &amp;new_jstr);
+
+    return new_jstr;
+&#125;</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+<h3 id="2、访问Java静态属性"><a href="#2、访问Java静态属性" class="headerlink" title="2、访问Java静态属性"></a>2、访问Java静态属性</h3><p><strong>GET<Type>Field</strong></p>
+<ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+    public static int count = 5;
+    //访问属性，返回修改之后的属性内容
+    public native int accessStaticField();
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        System.out.println(&quot;count 修改前：&quot;+t.count);
+        t.accessStaticField();
+        System.out.println(&quot;count 修改后：&quot;+t.count);
+    &#125;
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法</li>
+</ul>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    accessField
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jint JNICALL Java_com_example_jni_JNITest_accessStaticField
+(JNIEnv *, jobject);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+
+JNIEXPORT jint JNICALL Java_com_example_jni_JNITest_accessStaticField
+(JNIEnv *jEnv, jobject jobj) &#123;
+    //jobj是t对象，JniTest.class
+    jclass cls = (*jEnv)-&gt;GetObjectClass(jEnv, jobj);
+    //jfieldID
+    //属性名称，属性签名
+    jfieldID fid = (*jEnv)-&gt;GetStaticFieldID(jEnv, cls, &quot;count&quot;, &quot;I&quot;);
+
+    //获取 count 属性的值
+    //Get&lt;Type&gt;Field
+    jint count = (*jEnv)-&gt;GetStaticIntField(jEnv, jobj, fid);
+    printf(&quot;jstr:%#x\n&quot;, &amp;jstr);
+    count++;
+    (*jEnv)-&gt;SetStaticIntField(jEnv, jobj, fid,count);
+    return count;
+&#125;</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+<h3 id="3、访问java方法"><a href="#3、访问java方法" class="headerlink" title="3、访问java方法"></a>3、访问java方法</h3><p><strong>Call<Type>Method</strong></p>
+<ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+
+    public native void accessMethod();
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        t.accessMethod();
+    &#125;
+
+    //产生指定范围的随机数
+    public int genRandomInt(int max)&#123;
+        System.out.println(&quot;genRandomInt 执行了...&quot;);
+        return new Random().nextInt(max); 
+    &#125;
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法；签名可通过下面的命令获取</li>
+</ul>
+<pre><code>javap -s -p com.example.jni.JNITest</code></pre><p>产生的结果中有对应的属性和方法的签名</p>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    accessMethod
+ * Signature: (I)I;
+ */
+JNIEXPORT void JNICALL Java_com_example_jni_JNITest_accessMethod
+(JNIEnv *, jobject);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+
+JNIEXPORT void JNICALL Java_com_example_jni_JNITest_accessMethod
+(JNIEnv *env, jobject jobj)&#123;
+    //jclass
+    jclass cls = (*env)-&gt;GetObjectClass(env, jobj);
+    //jmethodID
+    jmethodID mid = (*env)-&gt;GetMethodID(env, cls, &quot;genRandomInt&quot;, &quot;(I)I&quot;);
+    //调用
+    //Call&lt;Type&gt;Method
+    jint random = (*env)-&gt;CallIntMethod(env, jobj, mid, 200);
+    printf(&quot;random num:%ld&quot;,random);
+
+    //.....
+&#125;</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+<h3 id="4、访问静态方法"><a href="#4、访问静态方法" class="headerlink" title="4、访问静态方法"></a>4、访问静态方法</h3><p><strong>CallStatic<Type>Method</strong></p>
+<ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+
+    public native void accessStaticMethod();
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        t.accessStaticMethod();
+    &#125;
+
+    //产生UUID字符串
+    public static String getUUID()&#123;
+        return UUID.randomUUID().toString();
+    &#125;
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法；签名可通过下面的命令获取</li>
+</ul>
+<pre><code>javap -s -p com.example.jni.JNITest</code></pre><p>产生的结果中有对应的属性和方法的签名</p>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    accessStaticMethod
+ * Signature: ()Ljava/lang/String;;
+ */
+JNIEXPORT jstring JNICALL Java_com_example_jni_JNITest_accessStaticMethod
+(JNIEnv *, jobject);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+
+JNIEXPORT jstring JNICALL Java_com_example_jni_JNITest_accessStaticMethod
+(JNIEnv *env, jobject jobj)&#123;
+    //jclass
+    jclass cls = (*env)-&gt;GetObjectClass(env, jobj);
+    //jmethodID    
+    jmethodID mid = (*env)-&gt;GetStaticMethodID(env, cls, &quot;getUUID&quot;, &quot;()Ljava/lang/String;&quot;);
+
+    //调用
+    //CallStatic&lt;Type&gt;Method
+    jstring uuid = (*env)-&gt;CallStaticObjectMethod(env, cls, mid);
+
+    //随机文件名称 uuid.txt
+    //jstring -&gt; char*
+    //isCopy ，代表java和c操作的是同一个字符串
+    char *uuid_str = (*env)-&gt;GetStringUTFChars(env, uuid, NULL);
+    //拼接
+    char filename[100];
+    sprintf(filename, &quot;D://%s.txt&quot;,uuid_str);
+    FILE *fp = fopen(filename,&quot;w&quot;);
+    fputs(&quot;How are you?&quot;, fp);
+    fclose(fp);
+&#125;
+</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+<h3 id="5、访问构造方法"><a href="#5、访问构造方法" class="headerlink" title="5、访问构造方法"></a>5、访问构造方法</h3><p><strong>通过FindClass找到对应的类</strong></p>
+<ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+    //java.util.Date
+    public native Date accessConstructor();
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        t.accessConstructor();
+    &#125;
+
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法；签名可通过下面的命令获取</li>
+</ul>
+<pre><code>javap -s -p com.example.jni.JNITest</code></pre><p>产生的结果中有对应的属性和方法的签名</p>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    accessConstructor
+ * Signature: 
+ */
+JNIEXPORT jobject JNICALL Java_com_example_jni_JNITest_accessConstructor
+(JNIEnv *, jobject);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+
+//使用java.util.Date产生一个当前的时间戳
+JNIEXPORT jobject JNICALL Java_com_example_jni_JNITest_accessConstructor
+(JNIEnv *env, jobject jobj)&#123;
+    jclass cla = (*env)-&gt;FindClass(env,&quot;java/util/Date&quot;);
+    //jmethodID,构造方法的方法名称固定为&quot;&lt;init&gt;&quot;
+    jmethodID constructor_mid = (*env)-&gt;GetMethodID(env,cls,&quot;&lt;init&gt;&quot;,&quot;()V&quot;);
+    //实例化一个Date对象
+    jobject date_obj = (*env)-&gt;NewObject(env,cls,constructor_mid);
+    //调用getTime方法
+    jmehoodID mid = (*env)-&gt;GetMethodID(env,cls,&quot;getTime&quot;,&quot;()J&quot;);
+    //调用
+    jlong time = 
+    (*env)-&gt;CallLongMethod(env,date_obj,mid);
+    //time 为long long类型
+    printf(&quot;time: %lld\n&quot;,time);
+    return date_obj;
+&#125;
+</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+<h3 id="6、访问父类的方法"><a href="#6、访问父类的方法" class="headerlink" title="6、访问父类的方法"></a>6、访问父类的方法</h3><hr>
+<ul>
+<li>编写父类文件</li>
+</ul>
+<pre><code>public class Human &#123;
+    public void sayHi()&#123;
+        System.out.println(&quot;Human say Hi...&quot;);
+    &#125;
+&#125;
+
+
+public class man extends Human&#123;
+    @override
+    public void sayHi()&#123;
+        System.out.println(&quot;Man say Hi,How are you?&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+    public Human human = new Man();
+    public native void accessNonvirtualMethod();
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        t.accessNonvirtualMethod();
+    &#125;
+
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法；签名可通过下面的命令获取</li>
+</ul>
+<pre><code>javap -s -p com.example.jni.JNITest</code></pre><p>产生的结果中有对应的属性和方法的签名</p>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    accessNonvirtualMethod
+ * Signature: 
+ */
+JNIEXPORT jobject JNICALL Java_com_example_jni_JNITest_accessNonvirtualMethod
+(JNIEnv *, jobject);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+
+//调用父类的方法 
+JNIEXPORT jobject JNICALL Java_com_example_jni_JNITest_accessNonvirtualMethod
+(JNIEnv *env, jobject jobj)&#123;
+    jclass cls = (*env)-&gt;GetObjectClass(env,jobj);
+    //获取Man属性
+    jfieldID fid =    (*env)-&gt;GetFieldID(env,cls,&quot;human&quot;,&quot;Lcom/example/jni/Human;&quot;);
+    jobject human_obj = (*env)-&gt;GetObjectField(env,jobj,fid);
+    //执行sayHi方法
+    //传父类的父类
+    jclass human_cls = (*env)-&gt;FindClass(env,&quot;com/example/jni/Human&quot;);
+    jmethodID  mid = (*env)-&gt;GetMethodID(env,human_cls,&quot;sayHi&quot;,&quot;()V&quot;);
+    //执行子类方法
+    (*env)-&gt;CallObjectMethod(env,human_obj,mid);
+
+    //执行父类方法
+    (*env)-&gt;CallNonvirtualObjectMethod(env,human_obj,human_cls,mid);
+
+&#125;
+</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+<h2 id="三、JNI字符串乱码问题"><a href="#三、JNI字符串乱码问题" class="headerlink" title="三、JNI字符串乱码问题"></a>三、JNI字符串乱码问题</h2><ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+
+    public native String chineseChars(String in);
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        String outStr = t.chineseChars(&quot;传入一串中文&quot;);
+        System.out.println(outStr);
+    &#125;
+
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法；签名可通过下面的命令获取</li>
+</ul>
+<pre><code>javap -s -p com.example.jni.JNITest</code></pre><p>产生的结果中有对应的属性和方法的签名</p>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    chineseChars
+ * Signature: 
+ */
+JNIEXPORT jstring JNICALL Java_com_example_jni_JNITest_chineseChars
+(JNIEnv *, jobject,jstring);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+
+//中文问题
+JNIEXPORT jstring JNICALL Java_com_example_jni_JNITest_chineseChars
+(JNIEnv *env, jobject jobj, jstring in) &#123;
+    char *c_str = (*env)-&gt;GetStringUTFChars(env, in, NULL);
+    printf(&quot;%s\n&quot;, c_str);
+    char *c_str_out = &quot;传出一段文字&quot;;
+    //NewStringUTF 是utf-16编码
+    jstring j_str = (*env)-&gt;NewStringUTF(env, c_str_out);
+    //使用Java处理乱码问题
+    jclass jcls = (*env)-&gt;FindClass(env, &quot;java/lang/String&quot;);
+    //jmethodID
+    jmethodID c_mid = (*env)-&gt;GetMethodID(env, jcls, &quot;&lt;init&gt;&quot;, &quot;([BLjava/lang/String;)V&quot;);
+    //byte[]数组
+    //jbyteArray -&gt; char[]
+    jbyteArray bytes = (*env)-&gt;NewByteArray(env, strlen(c_str_out));
+    //byte数组赋值
+    (*env)-&gt;SetByteArrayRegion(env, bytes, 0, strlen(c_str_out), c_str_out);
+    //字符编码
+    jstring charsetName = (*env)-&gt;NewStringUTF(env, &quot;GB2312&quot;);
+    //调用构造函数，返回编码之后的字符串
+
+    return (*env)-&gt;NewObject(env, jcls, c_mid, bytes, charsetName);
+&#125;
+</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+<h2 id="四、JNI数组处理，传入一个数组，返回另一个数组"><a href="#四、JNI数组处理，传入一个数组，返回另一个数组" class="headerlink" title="四、JNI数组处理，传入一个数组，返回另一个数组"></a>四、JNI数组处理，传入一个数组，返回另一个数组</h2><ul>
+<li>编写JNITest.java文件</li>
+</ul>
+<pre><code>public class JNITest &#123;
+
+    public native int[] sortArray(int[] array);
+
+    public static void main(String[] args)&#123;
+        JNITest t = new JNITest();
+        int[] arr = new int[]&#123;6,8,1,17,23,12,65,32&#125;;
+        int newArr = t.sortArray();
+        for (int i : arr) &#123;
+            System.out.println(i);
+        &#125;
+        System.out.println(&quot;返回的新数组为：&quot;);
+         for (int i : newArr) &#123;
+            System.out.println(i);
+        &#125;
+    &#125;
+
+
+    static &#123;
+        System.loadLibrary(&quot;JNIProject&quot;);
+    &#125;
+&#125;</code></pre><ul>
+<li>在com_example_jni_JNITest.h文件声明对应的方法；签名可通过下面的命令获取</li>
+</ul>
+<pre><code>javap -s -p com.example.jni.JNITest</code></pre><p>产生的结果中有对应的属性和方法的签名</p>
+<pre><code>/* DO NOT EDIT THIS FILE - it is machine generated */
+#include &quot;jni.h&quot;
+/* Header for class com_example_jni_JNITest */
+
+#ifndef _Included_com_example_jni_JNITest
+#define _Included_com_example_jni_JNITest
+#ifdef __cplusplus
+extern &quot;C&quot; &#123;
+#endif
+/*
+ * Class:     com_example_jni_JNITest
+ * Method:    sortArray
+ * Signature: 
+ */
+JNIEXPORT jintArray JNICALL Java_com_example_jni_JNITest_sortArray
+(JNIEnv *, jobject,jintArray);
+#ifdef __cplusplus
+&#125;
+#endif
+#endif
+</code></pre><ul>
+<li>在JNITest.c文件实现com_example_jni_JNITest.h中声明的方法</li>
+</ul>
+<pre><code>#include &quot;com_example_jni_JNITest.h&quot;
+#include &lt;stdlib.h&gt;
+
+int compare(int *a,int *b)&#123;
+    return (*a) - (*b);
+&#125;
+
+//数组处理
+JNIEXPORT jintArray JNICALL Java_com_example_jni_JNITest_sortArray
+(JNIEnv *env, jobject jobj, jintArray arr) &#123;
+    //拿到 jintArray 的指针 -&gt; 得到 c int 数组
+    jint *elems = (*env)-&gt;GetIntArrayElements(env,arr,NULL);
+    //数组的长度
+    int len = (*env)-&gt;GetArrayLength(env,arr);
+
+    //排序
+    qsort(elems, len, sizeof(jint), compare);
+    //同步,第4个参数：
+    //JNI_OK(0)：Java数组进行更新，并且释放C/C++数组
+    //JNI_COMMIT(1):Java数组进行更新，不释放C/C++数组（函数执行完数组会释放）
+    //JNI_ABOUT：Java数组不进行更新，但释放C/C++数组
+    (*env)-&gt;ReleaseIntArrayElements(env, arr, elems,JNI_COMMIT);
+
+
+    //将原数组倒序生成一个新的数组
+    jintArray jint_new_arr = (*env)-&gt;NewIntArray(env,len);
+    jint *new_elems = (*env)-&gt;GetIntArrayElements(env,jint_new_arr,NULL);
+    int i = len-1;
+    for(; i &gt;= 0; i--)&#123;
+        int j = len-1-i;
+        new_elems[j] = elems[i];
+    &#125;
+    //同步
+    (*env)-&gt;ReleaseIntArrayElements(env, jint_new_arr, new_elems, JNI_COMMIT);
+    return jint_new_arr;
+&#125;
+</code></pre><ul>
+<li>将c代码生成解决文件（动态库.dll）</li>
+<li>将动态库文件拷贝到java项目根路径下</li>
+<li>运行JNITest.java ，即可看到输出结果。</li>
+</ul>
+
+  </div>
+  <div>
+  
+  <div class="post-note note-warning copyright" style="margin-top: 42px">
+    <p><span style="font-weight: bold;">作者：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/about">一个人的旅行</a></p>
+    <p><span style="font-weight: bold;">文章链接：</span><a target="_blank" rel="nofollow noopener noreferrer" href="https://blog.onestravel.cn/20180920/b92bc69386ee/">https://blog.onestravel.cn/20180920/b92bc69386ee/</a></p>
+    <p><span style="font-weight: bold;">版权声明：</span>本博客所有文章除特别声明外，均采用<a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0 协议</a>。转载请注明出处！</p>
+  </div>
+  
+  </div>
+</article>
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/20180925/e8fca33a94a3/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一篇</div>
+        
+        <div class="nav-title">JNI 引用、异常处理和缓存策略 </div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+  <div class="nav-item-next">
+    <a href="/20180915/bbdac1278a35/" class="nav-link">
+      <div>
+        <div class="nav-label">下一篇</div>
+        
+        <div class="nav-title">JNI 开发流程 </div>
+        
+      </div>
+      <i class="iconfont icon-right nav-next-icon"></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class="card card-content comment-card" style="margin-top: 16px;">
+  <div class="comment-card-title">评论</div>
+  
+  <div id="gitalk-container"></div>
+  
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+  
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+  
+<script src="/js/lib/md5.min.js"></script>
+
+  <script>
+    var gitalk = new Gitalk({
+      clientID: 'a52a65db0a634019e27f',
+      clientSecret: 'a04eaebc103e73d3769221171a4b87b55b39998d',
+      repo: 'onestravel.github.io',
+      owner: 'onestravel',
+      admin: "onestravel",
+      id: md5(location.href),
+      distractionFreeMode: true,
+      language: 'navigator.language || navigator.userLanguage',
+      labels: ["Gitalk"],
+      perPage: 10
+    })
+
+    gitalk.render('gitalk-container')
+  </script>
+
+</div>
+
+<div class="card card-content toc-card" id="mobiletoc">
+  <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#JNI-%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">JNI 的数据类型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81JNI-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">一、JNI 数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81C%E9%80%9A%E8%BF%87JNI%E8%B0%83%E7%94%A8Java"><span class="toc-text">二、C通过JNI调用Java</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E8%AE%BF%E9%97%AEJava%E5%B1%9E%E6%80%A7"><span class="toc-text">1、访问Java属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%AE%BF%E9%97%AEJava%E9%9D%99%E6%80%81%E5%B1%9E%E6%80%A7"><span class="toc-text">2、访问Java静态属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E8%AE%BF%E9%97%AEjava%E6%96%B9%E6%B3%95"><span class="toc-text">3、访问java方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E8%AE%BF%E9%97%AE%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95"><span class="toc-text">4、访问静态方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E8%AE%BF%E9%97%AE%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95"><span class="toc-text">5、访问构造方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81%E8%AE%BF%E9%97%AE%E7%88%B6%E7%B1%BB%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text">6、访问父类的方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81JNI%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98"><span class="toc-text">三、JNI字符串乱码问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81JNI%E6%95%B0%E7%BB%84%E5%A4%84%E7%90%86%EF%BC%8C%E4%BC%A0%E5%85%A5%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84%EF%BC%8C%E8%BF%94%E5%9B%9E%E5%8F%A6%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84"><span class="toc-text">四、JNI数组处理，传入一个数组，返回另一个数组</span></a></li></ol></li></ol>
+</div></main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  <article class="display-when-two-columns spacer">
+    <div class="card card-content toc-card">
+      <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#JNI-%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">JNI 的数据类型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81JNI-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">一、JNI 数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81C%E9%80%9A%E8%BF%87JNI%E8%B0%83%E7%94%A8Java"><span class="toc-text">二、C通过JNI调用Java</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E8%AE%BF%E9%97%AEJava%E5%B1%9E%E6%80%A7"><span class="toc-text">1、访问Java属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%AE%BF%E9%97%AEJava%E9%9D%99%E6%80%81%E5%B1%9E%E6%80%A7"><span class="toc-text">2、访问Java静态属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E8%AE%BF%E9%97%AEjava%E6%96%B9%E6%B3%95"><span class="toc-text">3、访问java方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E8%AE%BF%E9%97%AE%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95"><span class="toc-text">4、访问静态方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E8%AE%BF%E9%97%AE%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95"><span class="toc-text">5、访问构造方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81%E8%AE%BF%E9%97%AE%E7%88%B6%E7%B1%BB%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text">6、访问父类的方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81JNI%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98"><span class="toc-text">三、JNI字符串乱码问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81JNI%E6%95%B0%E7%BB%84%E5%A4%84%E7%90%86%EF%BC%8C%E4%BC%A0%E5%85%A5%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84%EF%BC%8C%E8%BF%94%E5%9B%9E%E5%8F%A6%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84"><span class="toc-text">四、JNI数组处理，传入一个数组，返回另一个数组</span></a></li></ol></li></ol>
+    </div>
+  </article>
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  <article class="card card-content toc-card">
+    <div class="toc-header"><i class="iconfont icon-menu" style="padding-right: 2px;"></i>目录</div>
+<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#JNI-%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">JNI 的数据类型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81JNI-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">一、JNI 数据类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81C%E9%80%9A%E8%BF%87JNI%E8%B0%83%E7%94%A8Java"><span class="toc-text">二、C通过JNI调用Java</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E8%AE%BF%E9%97%AEJava%E5%B1%9E%E6%80%A7"><span class="toc-text">1、访问Java属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%AE%BF%E9%97%AEJava%E9%9D%99%E6%80%81%E5%B1%9E%E6%80%A7"><span class="toc-text">2、访问Java静态属性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E8%AE%BF%E9%97%AEjava%E6%96%B9%E6%B3%95"><span class="toc-text">3、访问java方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E8%AE%BF%E9%97%AE%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95"><span class="toc-text">4、访问静态方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E8%AE%BF%E9%97%AE%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95"><span class="toc-text">5、访问构造方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6%E3%80%81%E8%AE%BF%E9%97%AE%E7%88%B6%E7%B1%BB%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text">6、访问父类的方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81JNI%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98"><span class="toc-text">三、JNI字符串乱码问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81JNI%E6%95%B0%E7%BB%84%E5%A4%84%E7%90%86%EF%BC%8C%E4%BC%A0%E5%85%A5%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84%EF%BC%8C%E8%BF%94%E5%9B%9E%E5%8F%A6%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84"><span class="toc-text">四、JNI数组处理，传入一个数组，返回另一个数组</span></a></li></ol></li></ol>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  <script>
+  var addImgLayout = function () {
+    var img = document.querySelectorAll('.post-content img');
+    var i;
+    for (i = 0; i < img.length; i++) {
+      var wrapper = document.createElement('a');
+      wrapper.setAttribute('href', img[i].getAttribute('data-src'));
+      wrapper.setAttribute('aria-label', 'illustration');
+      wrapper.style.cssText = 'width: 100%; display: flex; justify-content: center;';
+      if (img[i].alt) wrapper.dataset.caption = img[i].alt;
+      wrapper.dataset.nolink = true;
+      img[i].before(wrapper);
+      wrapper.append(img[i]);
+      var divWrap = document.createElement('div');
+      divWrap.classList.add('gallery');
+      wrapper.before(divWrap);
+      divWrap.append(wrapper);
+    }
+    baguetteBox.run('.gallery');
+  }
+</script>
+<script>loadScript("/js/lib/lightbox/baguetteBox.min.js", addImgLayout)</script>
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>

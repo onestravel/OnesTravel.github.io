@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#fff" id="theme-color">
+  <meta name="description" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  <link rel="icon" href="/favicon.png">
+  <title>一个人的旅行</title>
+  
+  
+  <meta property="og:title" content="一个人的旅行">
+  
+  
+  <meta property="og:url" content="https://blog.onestravel.cn/page/6/index.html">
+  
+  
+  <meta property="og:img" content="/medias/avatar.jpg">
+  
+  
+  <meta property="og:img" content="冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！">
+  
+  
+  
+  <script>
+    // control reverse button
+    var reverseDarkList = {
+      dark: 'light',
+      light: 'dark'
+    };
+    var themeColor = {
+      dark: '#1c1c1e',
+      light: '#fff'
+    }
+    // get the data of css prefers-color-scheme
+    var getCssMediaQuery = function() {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    // reverse current darkmode setting function
+    var reverseDarkModeSetting = function() {
+      var setting = localStorage.getItem('user-color-scheme');
+      if(reverseDarkList[setting]) {
+        setting = reverseDarkList[setting];
+      } else if(setting === null) {
+        setting = reverseDarkList[getCssMediaQuery()];
+      } else {
+        return;
+      }
+      localStorage.setItem('user-color-scheme', setting);
+      return setting;
+    };
+    // apply current darkmode setting
+    var setDarkmode = function(mode) {
+      var setting = mode || localStorage.getItem('user-color-scheme');
+      if(setting === getCssMediaQuery()) {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else if(reverseDarkList[setting]) {
+        document.documentElement.setAttribute('data-user-color-scheme', setting);
+        document.getElementById('theme-color').content = themeColor[setting];
+      } else {
+        document.documentElement.removeAttribute('data-user-color-scheme');
+        localStorage.removeItem('user-color-scheme');
+        document.getElementById('theme-color').content = themeColor[getCssMediaQuery()];
+      }
+    };
+    setDarkmode();
+  </script>
+  <script>
+    function loadScript(url, cb) {
+      var script = document.createElement('script');
+      script.src = url;
+      if (cb) script.onload = cb;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  </script>
+  
+  <link rel="preload" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css" as="style" >
+  <link rel="preload" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css" as="style" >
+  
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.js" as="script">
+  <link rel="preload" href="/js/lib/lightbox/baguetteBox.min.css" as="style" >
+  
+  
+  <link rel="preload" href="/js/lib/lozad.min.js" as="script">
+  
+  
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" as="script">
+  
+  
+  
+  <link rel="prefetch" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" as="script">
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1946621_i1kgafibvw.css">
+
+  
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1952792_89b4ac4k4up.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.2.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+  <div class="wrapper">
+    
+    <nav class="navbar">
+  <div class="navbar-logo">
+    <span class="navbar-logo-main">
+      
+      <img class="navbar-logo-img" src="/favicon.png" alt="logo">
+      
+      <span class="navbar-logo-dsc">一个人的旅行</span>
+    </span>
+  </div>
+  <div class="navbar-menu">
+    
+    <a href="/" class="navbar-menu-item">
+    
+    首页
+    
+    </a>
+    
+    <a href="/archives" class="navbar-menu-item">
+    
+    归档
+    
+    </a>
+    
+    <a href="/tags" class="navbar-menu-item">
+    
+    标签
+    
+    </a>
+    
+    <a href="/categories" class="navbar-menu-item">
+    
+    分类
+    
+    </a>
+    
+    <a href="/about" class="navbar-menu-item">
+    
+    关于
+    
+    </a>
+    
+    <a href="/friends" class="navbar-menu-item">
+    
+    友链
+    
+    </a>
+    
+    <a class="navbar-menu-item darknavbar" id="dark"><i class="iconfont icon-weather"></i></a>
+    <a class="navbar-menu-item searchnavbar" id="search"><i class="iconfont icon-search" style="font-size: 1.2rem; font-weight: 400;"></i></a>
+  </div>
+</nav>
+    
+    <div id="local-search" style="display: none;">
+      <input class="navbar-menu-item" id="search-input" placeholder="请输入搜索内容...">
+      <div id="search-content"></div>
+    </div>
+    
+    <div class="section-wrap">
+      <div class="container">
+        <div class="columns">
+          <main class="main-column">
+<div class="card">
+  
+  <a href="/20180522/06ca6f81dd4b/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20180513/Jenkins.jpg" data-src="/images/20180513/Jenkins.jpg"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20180522/06ca6f81dd4b/">
+      <h1 class="post-title">
+        自动化构建Android项目 ---- Jenkins自动化部署学习笔记（二）
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      自动化构建Android项目 —- Jenkins自动化部署学习笔记（二）前言&amp;emsp;&amp;emsp;上篇文章跟大家分享了在Windows上安装Jenkins的方法，这篇文章来跟大家分享一下利用Jenkins自动化构建Android项目：
+一、所需准备：
+Android项目上传至版本管理平台，...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2018-05-22T02:00:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2018-05-22</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/Jenkins/" class="post-meta-link">Jenkins</a>
+        
+        
+      </div>
+      <a href="/20180522/06ca6f81dd4b/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20180509/a6065fafcad9/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20180513/Jenkins.jpg" data-src="/images/20180513/Jenkins.jpg"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20180509/a6065fafcad9/">
+      <h1 class="post-title">
+        在Windows系统上安装Jenkins ---- Jenkins自动化部署学习笔记（一）
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      在Windows系统上安装Jenkins —- Jenkins自动化部署学习笔记（一）前言&amp;emsp;&amp;emsp;之前一直想着学习一下Jenkins自动化部署，最近刚好有点时间，就利用这点时间来学习一下Jenkins自动化部署，做个笔记，既可以巩固自己的学习，也可以帮助更多的人了解Jenkin...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2018-05-09T02:00:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2018-05-09</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/Jenkins/" class="post-meta-link">Jenkins</a>
+        
+        
+      </div>
+      <a href="/20180509/a6065fafcad9/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20180509/1f4a362e23f9/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20180509/springboot.png" data-src="/images/20180509/springboot.png"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20180509/1f4a362e23f9/">
+      <h1 class="post-title">
+        从零开始-使用IntelliJ IDEA创建SpringBoot项目
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      从零开始-使用IntelliJ IDEA创建SpringBoot项目前言*注：此文章谨以记录学习过程，分享学习心得！
+刚刚开始了解SpringBoot框架，觉得很好用，觉得很有必要深入学习一下该框架，现在就来创建一个SpringBoot项目：
+新建项目1、在IDEA上新建一个Project​ ...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2018-05-09T02:00:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2018-05-09</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/SpringBoot/" class="post-meta-link">SpringBoot</a>
+        
+        
+      </div>
+      <a href="/20180509/1f4a362e23f9/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20180506/d52aed55d60c/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20180506/intellij-idea.jpg" data-src="/images/20180506/intellij-idea.jpg"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20180506/d52aed55d60c/">
+      <h1 class="post-title">
+        最全IDEA快捷键总结，大幅度提高工作效率
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      最全IDEA快捷键总结，大幅度提高工作效率前言[](#刚开始使用 IDEA 的同学可能不熟悉 IDEA 的快捷键方式觉得没有eclipse的好用但是不建议把 IDEA 的keymap改成eclipse因为 IDEA 的快捷键设计有它独到的一面刚开始使用不习惯但是用多了就会觉得这些快捷键非常好用...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2018-05-06T02:00:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2018-05-06</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/DevTools/" class="post-meta-link">DevTools</a>
+        
+        
+      </div>
+      <a href="/20180506/d52aed55d60c/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20171020/220328c816aa/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/github.jpg" data-src="/images/github.jpg"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20171020/220328c816aa/">
+      <h1 class="post-title">
+        Github+域名搭建个人主页（个人博客）
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      一、工作准备搭建个人主页需要做的准备工作有两个：
+1）、注册Github账号，注册Github账号是免费的，Github网站地址：https://github.com/github点击Sign up进入注册页面，总共有三步，按照步骤填入相应的信息即可。第一步：第二步：第三步：注册步骤完成之后点...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2017-10-20T02:00:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2017-10-20</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/前端H5/" class="post-meta-link">前端H5</a>
+        
+        
+      </div>
+      <a href="/20171020/220328c816aa/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20170328/1c2e82f91ad4/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20170328/404.png" data-src="/images/20170328/404.png"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20170328/1c2e82f91ad4/">
+      <h1 class="post-title">
+        （源码）解决Android的WebView加载失败（404，500），显示的自定义视图
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      介绍一下可以在Android的WebView加载时出现404,500等错误页面的时候，显示自己定义的一些友好页面。
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2017-03-28T04:09:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2017-03-28</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/Android/" class="post-meta-link">Android</a>
+        
+        
+      </div>
+      <a href="/20170328/1c2e82f91ad4/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20170328/8163f0d61598/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20180424/git.jpg" data-src="/images/20180424/git.jpg"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20170328/8163f0d61598/">
+      <h1 class="post-title">
+        Git的简单使用方法
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      Git的使用一、认识 Git1. Git 和替他版本控制系统的差异
+直接记录快照，非差异比较
+
+git 和其他版本控制系统主要差别在于对 Git 对待数据的方法。其他版本控制系统（CVS、Subversion等等）大部分都是一文件变更列表的方式存储信息，将保存信息看做一组基本文件和每个文件跟随...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2017-03-28T04:09:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2017-03-28</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/Git/" class="post-meta-link">Git</a>
+        
+        
+      </div>
+      <a href="/20170328/8163f0d61598/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20161009/16c77759ce14/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20180506/linux.jpg" data-src="/images/20180506/linux.jpg"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20161009/16c77759ce14/">
+      <h1 class="post-title">
+        Linux 用户、用户组添加修改删除(ubuntu、centos)
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      Linux 用户、用户组添加修改删除(ubuntu、centos)一、LINUX(UBUNTU/CENTOS)用户添加删除修改1、建用户：adduser web                             #新建web用户
+useradd web                  ...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2016-10-09T01:15:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2016-10-09</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/Linux/" class="post-meta-link">Linux</a>
+        
+        
+      </div>
+      <a href="/20161009/16c77759ce14/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+<div class="card">
+  
+  <a href="/20161009/af07143c33b9/" class="image-wrapper" aria-label="thumbnail">
+    <img src="/images/20161009/LocalStorage.jpg" data-src="/images/20161009/LocalStorage.jpg"
+      srcset="data:image/svg+xml,%3Csvg%20xmlns=&#39;http://www.w3.org/2000/svg&#39;%20viewBox=&#39;0%200%20300%20300&#39;%3E%3C/svg%3E"
+      class="image lozad">
+  </a>
+  
+  <article class="card card-content">
+    <a href="/20161009/af07143c33b9/">
+      <h1 class="post-title">
+        Html5利用AppCache和LocalStorage实现缓存h5页面数据
+      </h1>
+    </a>
+    <div class="card-excerpt">
+      
+      Html5利用AppCache和LocalStorage实现缓存h5页面数据
+最近在开发的过程中遇到了一个问题，就是在Android上通过WebView加载Html5页面时发现页面加载速度慢，再加上网络速度慢，每次请求需要5s左右的时间，严重影响用户体验，所以查询资料，最终找到一个可以解决加载...
+      
+    </div>
+    <div class="card-post-footer">
+      <div class="post-meta">
+        <time datetime="2016-10-09T01:15:00.000Z">
+          <i class="iconfont icon-calendar" style="margin-right: 2px;"></i>
+          <span>2016-10-09</span>
+        </time>
+        
+        <span class="dot"></span>
+        
+        <a href="categories/前端H5/" class="post-meta-link">前端H5</a>
+        
+        
+      </div>
+      <a href="/20161009/af07143c33b9/">继续阅读 </a>
+    </div>
+  </article>
+</div>
+
+
+<div class="nav">
+  
+  <div class="nav-item-prev">
+    <a href="/page/5/" class="nav-link">
+      <i class="iconfont icon-left nav-prev-icon"></i>
+      <div>
+        <div class="nav-label">上一页</div>
+        
+      </div>
+    </a>
+  </div>
+  
+  
+</div>
+</main>
+          <aside class="left-column">
+            
+            <div class="card card-author">
+              
+<img src="/medias/avatar.jpg" class="author-img">
+
+<p class="author-name">一个人的旅行</p>
+<p class="author-description">冰冻三尺，非一日之寒；为山九仞，岂一日之功；不忘初心，方得始终！</p>
+<div class="author-message">
+  <a class="author-posts-count" href="/archives">
+    <span>69</span>
+    <span>文章</span>
+  </a>
+  <a class="author-categories-count" href="/categories">
+    <span>14</span>
+    <span>分类</span>
+  </a>
+  <a class="author-tags-count" href="/tags">
+    <span>47</span>
+    <span>标签</span>
+  </a>
+</div>
+
+<div class="author-card-society">
+  
+    <div class="author-card-society-icon">
+      <a target="_blank" rel="noopener" href="https://github.com/onestravel">
+        <i class="iconfont icon-github society-icon"></i>
+      </a>
+    </div>
+  
+    <div class="author-card-society-icon">
+      <a href="mailto:service@onestravel.cn">
+        <i class="iconfont icon-mail society-icon"></i>
+      </a>
+    </div>
+  
+</div>
+
+            </div>
+            
+            <div class="sticky-tablet">
+  
+  
+  
+  <article class="card card-content categories-widget">
+    <div class="categories-card">
+  <div class="categories-header"><i class="iconfont icon-fenlei" style="padding-right: 2px;"></i>分类</div>
+  <div class="categories-list">
+    
+      <a href="/categories/NDK/">
+        <div class="categories-list-item">
+          NDK
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Android/">
+        <div class="categories-list-item">
+          Android
+          <span class="categories-list-item-badge">9</span>
+        </div>
+      </a>
+    
+      <a href="/categories/CPlusPlus/">
+        <div class="categories-list-item">
+          CPlusPlus
+          <span class="categories-list-item-badge">6</span>
+        </div>
+      </a>
+    
+      <a href="/categories/C/">
+        <div class="categories-list-item">
+          C
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/前端H5/">
+        <div class="categories-list-item">
+          前端H5
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JNI/">
+        <div class="categories-list-item">
+          JNI
+          <span class="categories-list-item-badge">3</span>
+        </div>
+      </a>
+    
+      <a href="/categories/算法/">
+        <div class="categories-list-item">
+          算法
+          <span class="categories-list-item-badge">18</span>
+        </div>
+      </a>
+    
+      <a href="/categories/DevTools/">
+        <div class="categories-list-item">
+          DevTools
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/SpringBoot/">
+        <div class="categories-list-item">
+          SpringBoot
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Jenkins/">
+        <div class="categories-list-item">
+          Jenkins
+          <span class="categories-list-item-badge">5</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Kotlin/">
+        <div class="categories-list-item">
+          Kotlin
+          <span class="categories-list-item-badge">8</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Linux/">
+        <div class="categories-list-item">
+          Linux
+          <span class="categories-list-item-badge">2</span>
+        </div>
+      </a>
+    
+      <a href="/categories/JAVA/">
+        <div class="categories-list-item">
+          JAVA
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+      <a href="/categories/Git/">
+        <div class="categories-list-item">
+          Git
+          <span class="categories-list-item-badge">1</span>
+        </div>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+  <article class="card card-content tags-widget">
+    <div class="tags-card">
+  <div class="tags-header"><i class="iconfont icon-biaoqian" style="padding-right: 2px;"></i>热门标签</div>
+  <div class="tags-list">
+    
+    <a href="/tags/Android/" title="Android"><div class="tags-list-item">Android</div></a>
+    
+    <a href="/tags/Kotlin/" title="Kotlin"><div class="tags-list-item">Kotlin</div></a>
+    
+    <a href="/tags/CPlusPlus/" title="CPlusPlus"><div class="tags-list-item">CPlusPlus</div></a>
+    
+    <a href="/tags/NDK/" title="NDK"><div class="tags-list-item">NDK</div></a>
+    
+    <a href="/tags/C/" title="C"><div class="tags-list-item">C</div></a>
+    
+    <a href="/tags/JVM/" title="JVM"><div class="tags-list-item">JVM</div></a>
+    
+    <a href="/tags/数组/" title="数组"><div class="tags-list-item">数组</div></a>
+    
+    <a href="/tags/自动化部署/" title="自动化部署"><div class="tags-list-item">自动化部署</div></a>
+    
+    <a href="/tags/Jenkins/" title="Jenkins"><div class="tags-list-item">Jenkins</div></a>
+    
+    <a href="/tags/斐波那契数列/" title="斐波那契数列"><div class="tags-list-item">斐波那契数列</div></a>
+    
+    <a href="/tags/Intellij-IDEA/" title="Intellij IDEA"><div class="tags-list-item">Intellij IDEA</div></a>
+    
+    <a href="/tags/html/" title="html"><div class="tags-list-item">html</div></a>
+    
+    <a href="/tags/JNI/" title="JNI"><div class="tags-list-item">JNI</div></a>
+    
+    <a href="/tags/Linux/" title="Linux"><div class="tags-list-item">Linux</div></a>
+    
+    <a href="/tags/矩阵/" title="矩阵"><div class="tags-list-item">矩阵</div></a>
+    
+    <a href="/tags/centos/" title="centos"><div class="tags-list-item">centos</div></a>
+    
+  </div>
+</div>
+  </article>
+  
+  
+  <article class="card card-content widescreen-archive archive-widget">
+    <div class="archive-card">
+  <div class="archive-card-header"><i class="iconfont icon-wodebaobiao" style="padding-right: 2px;"></i>归档</div>
+  <div class="archive-card-list">
+    
+    
+    
+      
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2021" class="archive-card-list-item">
+              2021
+              <span class="archive-card-list-item-badge">5</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2020" class="archive-card-list-item">
+              2020
+              <span class="archive-card-list-item-badge">2</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2019" class="archive-card-list-item">
+              2019
+              <span class="archive-card-list-item-badge">25</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2018" class="archive-card-list-item">
+              2018
+              <span class="archive-card-list-item-badge">32</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2017" class="archive-card-list-item">
+              2017
+              <span class="archive-card-list-item-badge">3</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+    
+      <a href="/archives/2016" class="archive-card-list-item">
+          2016
+          <span class="archive-card-list-item-badge">2</span>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+</div>
+          </aside>
+          <aside class="right-column">
+            <div class="sticky-widescreen">
+  
+  
+  
+  <article class="card card-content">
+    <div class="recent-posts-card">
+  <div class="recent-posts-header"><i class="iconfont icon-wenzhang_huaban" style="padding-right: 2px;"></i>最近文章</div>
+  <div class="recent-posts-list">
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-09-20</div>
+        <a href="/20210920/f8c53c115779/"><div class="recent-posts-item-content">【并发编程】线程基础</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-07-28</div>
+        <a href="/20210728/9c2efe6aefcb/"><div class="recent-posts-item-content">【笔记四】编译插桩操纵字节码，实现不可能完成的任务</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-05-28</div>
+        <a href="/20210528/618470f841d8/"><div class="recent-posts-item-content">【笔记三】字节码层面分析 class 文件结构</div></a>
+      </div>
+    
+      <div class="recent-posts-item">
+        <div class="recent-posts-item-title">2021-03-28</div>
+        <a href="/20210328/68b72d473df5/"><div class="recent-posts-item-content">【笔记二】GC 回收机制和分代回收策略</div></a>
+      </div>
+    
+  </div>
+</div>
+  </article>
+  
+  
+  <article class="card card-content">
+    <div class="archive-card">
+  <div class="archive-card-header"><i class="iconfont icon-wodebaobiao" style="padding-right: 2px;"></i>归档</div>
+  <div class="archive-card-list">
+    
+    
+    
+      
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2021" class="archive-card-list-item">
+              2021
+              <span class="archive-card-list-item-badge">5</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2020" class="archive-card-list-item">
+              2020
+              <span class="archive-card-list-item-badge">2</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2019" class="archive-card-list-item">
+              2019
+              <span class="archive-card-list-item-badge">25</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2018" class="archive-card-list-item">
+              2018
+              <span class="archive-card-list-item-badge">32</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a href="/archives/2017" class="archive-card-list-item">
+              2017
+              <span class="archive-card-list-item-badge">3</span>
+          </a>
+        
+        
+        
+      
+    
+      
+        
+      
+    
+    
+      <a href="/archives/2016" class="archive-card-list-item">
+          2016
+          <span class="archive-card-list-item-badge">2</span>
+      </a>
+    
+  </div>
+</div>
+  </article>
+  
+</div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+  <div class="footer-container">
+    <div>
+      <div class="footer-dsc">
+        <span>Copyright ©
+          
+          2020 -
+          
+          2022
+        </span>
+        &nbsp;
+        <a href="/" class="footer-link">一个人的旅行 </a>
+      </div>
+    </div>
+
+    
+    <div class="footer-dsc">
+      
+      Powered by
+      <a href="https://hexo.io/" class="footer-link" target="_blank" rel="nofollow noopener noreferrer">&nbsp;Hexo </a>
+      
+      
+      <span>&nbsp;|&nbsp;</span>
+      
+      
+      Theme -
+      <a href="https://github.com/theme-kaze" class="footer-link" target="_blank"
+        rel="nofollow noopener noreferrer">&nbsp;Kaze</a>
+      
+    </div>
+    
+    
+    
+    
+      <div class="footer-dsc">
+        
+        本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+        
+        <span>&nbsp;|&nbsp;</span>
+        
+        
+        本站总访客数<span id="busuanzi_value_site_uv"></span>次
+        
+      </div>
+      
+    
+</footer>
+  <a role="button" id="scrollbutton" class="basebutton"  aria-label="回到顶部">
+  <i class="iconfont icon-arrowleft button-icon"></i>
+</a>
+<a role="button" id="menubutton" class="basebutton">
+  <i class="iconfont icon-menu button-icon"></i>
+</a>
+<a role="button" id="popbutton" class="basebutton" aria-label="控制中心">
+  <i class="iconfont icon-expand button-icon"></i>
+</a>
+<a role="button" id="darkbutton" class="basebutton darkwidget" aria-label="夜色模式">
+  <i class="iconfont icon-weather button-icon"></i>
+</a>
+<a role="button" id="searchbutton" class="basebutton searchwidget" aria-label="搜索">
+  <i class="iconfont icon-search button-icon"></i>
+</a>
+
+  
+  
+  
+
+  
+  
+  
+  
+<script src="/js/main.js"></script>
+
+  
+  <script>loadScript("/js/lib/busuanzi.min.js")</script>
+  
+  
+  <script>
+    var addLazyload = function () {
+      var observer = lozad('.lozad', {
+        load: function (el) {
+          el.srcset = el.getAttribute('data-src');
+        },
+        loaded: function (el) {
+          el.classList.add('loaded');
+        }
+      });
+      observer.observe();
+    }
+  </script>
+  <script>loadScript("/js/lib/lozad.min.js", addLazyload)</script>
+  
+  
+  <script>
+    var googleAnalytics = function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-145377665-1');
+    }
+  </script>
+  <script>loadScript("https://www.googletagmanager.com/gtag/js?id=" + "UA-145377665-1", googleAnalytics)</script>
+  
+</body>
+
+</html>
